@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bảng điều khiển quản trị — Aurence</title>
+<link rel="stylesheet" href="../assets/css/style.css" />
+<style>
+  /* Modal styling */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 21, 48, 0.7);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: 20px; padding: 2.5rem; max-width: 550px; width: 90%;
+    box-shadow: var(--shadow-luxe); border: 1px solid var(--border);
+  }
+  .bar-chart {
+    display: flex; justify-content: space-around; align-items: flex-end;
+    height: 220px; border-bottom: 2px solid var(--border); padding-bottom: 10px;
+    margin-top: 1rem;
+  }
+  .bar {
+    display: flex; flex-direction: column; align-items: center; width: 50px;
+    background: var(--navy); color: #fff; border-radius: 6px 6px 0 0;
+    position: relative; transition: height 0.5s ease;
+  }
+  .bar:hover { background: var(--gold); }
+  .bar b { font-size: 0.75rem; margin-top: -20px; color: var(--text); position: absolute; }
+  .bar span { font-size: 0.7rem; color: var(--muted); position: absolute; bottom: -25px; white-space: nowrap; }
+</style>
+</head>
+<body data-admin="dash" data-no-concierge>
+<div class="admin-shell">
+  <div data-admin-nav></div>
+  <main class="admin-main">
+    <div class="admin-head">
+      <div><div class="eyebrow">Hệ thống quản trị</div><h1>Chào buổi chiều, Isabelle.</h1></div>
+      <div class="flex gap-2">
+        <a class="btn btn-outline" href="reports.html">Báo cáo doanh thu</a>
+        <button class="btn btn-primary" id="new-booking-btn">+ Đặt phòng mới</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="stat"><div class="lbl">Doanh thu tháng (VND)</div><div class="val" id="s-revenue">0 ₫</div><div class="trend">+12% so với tháng trước</div></div>
+      <div class="stat"><div class="lbl">Tỷ lệ lấp đầy</div><div class="val" id="s-occupancy">0%</div><div class="trend">+4pt hôm nay</div></div>
+      <div class="stat"><div class="lbl">Giá phòng TB (ADR)</div><div class="val" id="s-adr">0 ₫</div><div class="trend">+$68 biến động</div></div>
+      <div class="stat"><div class="lbl">Đặt phòng mới</div><div class="val" id="s-bookings-count">0</div><div class="trend">đơn trong hệ thống</div></div>
+    </div>
+
+    <div class="grid grid-2 mt-4">
+      <div class="card" style="padding:1.5rem">
+        <h3>Xu hướng doanh thu năm nay</h3>
+        <div class="line-chart mt-2">
+          <svg viewBox="0 0 400 200" preserveAspectRatio="none" style="height: 180px; width: 100%;">
+            <!-- Dynamic path based on static revenue trend -->
+            <path d="M0,160 L50,140 L100,150 L150,110 L200,95 L250,70 L300,80 L350,40 L400,55" fill="none" stroke="var(--gold)" stroke-width="3" />
+            <path d="M0,160 L50,140 L100,150 L150,110 L200,95 L250,70 L300,80 L350,40 L400,55 L400,200 L0,200 Z" fill="var(--gold)" opacity="0.12" />
+          </svg>
+        </div>
+        <div class="flex justify-between muted mt-2" style="font-size:0.75rem"><span>Th1</span><span>Th2</span><span>Th3</span><span>Th4</span><span>Th5</span><span>Th6</span><span>Th7</span><span>Th8</span><span>Th9</span></div>
+      </div>
+      <div class="card" style="padding:1.5rem">
+        <h3>Tỷ lệ lấp đầy theo khách sạn (%)</h3>
+        <div class="bar-chart" id="bars" style="margin-bottom: 25px;"></div>
+      </div>
+    </div>
+
+    <div class="section-head mt-4"><h2>Danh sách đặt phòng mới nhất</h2><a class="btn btn-outline btn-sm" href="bookings.html">Xem tất cả đặt phòng →</a></div>
+    <div class="table-wrap mt-2">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Khách hàng</th>
+            <th>Khách sạn</th>
+            <th>Thời gian lưu trú</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Add Booking Modal -->
+<div class="modal-overlay" id="add-booking-modal">
+  <div class="modal-box">
+    <h3 style="color:var(--navy);">Thêm đặt phòng thủ công (Lễ tân)</h3>
+    <form id="new-booking-form" class="mt-3">
+      <div class="grid grid-2">
+        <div class="field" style="grid-column: span 2;">
+          <label>Tên khách hàng</label>
+          <input class="input" id="nb-customer" placeholder="Họ và tên khách hàng..." required />
+        </div>
+        <div class="field" style="grid-column: span 2;">
+          <label>Chọn khách sạn</label>
+          <select class="select" id="nb-hotel" required></select>
+        </div>
+        <div class="field" style="grid-column: span 2;">
+          <label>Chọn loại phòng trống</label>
+          <select class="select" id="nb-room" required></select>
+        </div>
+        <div class="field">
+          <label>Ngày nhận phòng</label>
+          <input class="input" type="date" id="nb-ci" required />
+        </div>
+        <div class="field">
+          <label>Ngày trả phòng</label>
+          <input class="input" type="date" id="nb-co" required />
+        </div>
+      </div>
+      <div class="mt-4 flex gap-2 justify-end">
+        <button type="button" class="btn btn-outline" id="close-modal-btn">Hủy bỏ</button>
+        <button type="submit" class="btn btn-primary">Xác nhận đặt đơn</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  const { LS } = AURENCE;
+  
+  let bookings = [];
+  let hotels = [];
+  let rooms = [];
+
+  function loadAdminData() {
+    bookings = LS.get("aurence.bookings", AURENCE.bookings);
+    hotels = LS.get("aurence.hotels", AURENCE.hotels);
+    rooms = LS.get("aurence.rooms", AURENCE.rooms);
+
+    // Calculate dynamic stats
+    // 1. Total active bookings count
+    document.getElementById("s-bookings-count").textContent = bookings.length;
+
+    // 2. Monthly Revenue (Completed or Checked-in bookings total)
+    let totalRevenue = 0;
+    bookings.forEach(b => {
+      if (b.status === "Đã nhận phòng" || b.status === "Đã trả phòng") {
+        totalRevenue += b.total;
+      }
+    });
+    // Format VND
+    const formatVND = (v) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(v);
+    document.getElementById("s-revenue").textContent = formatVND(totalRevenue);
+
+    // 3. ADR (Average Daily Rate)
+    // Dynamic ADR based on room prices
+    let totalRoomPrice = 0;
+    rooms.forEach(r => totalRoomPrice += r.price);
+    const avgADR = rooms.length > 0 ? Math.round(totalRoomPrice / rooms.length) : 0;
+    document.getElementById("s-adr").textContent = formatVND(avgADR);
+
+    // 4. Occupancy Rate
+    // Occupied rooms = rooms with status "Đang sử dụng" or "Đã đặt"
+    const occupiedCount = rooms.filter(r => r.status === "Đang sử dụng" || r.status === "Đã đặt").length;
+    const occupancyRate = rooms.length > 0 ? Math.round((occupiedCount / rooms.length) * 100) : 0;
+    document.getElementById("s-occupancy").textContent = occupancyRate + "%";
+
+    // Render Latest bookings table
+    const tableBody = document.getElementById("tb");
+    tableBody.innerHTML = bookings.slice(0, 6).map(b => {
+      const statusClass = b.status === "Đã xác nhận" ? "confirmed" : b.status === "Đã nhận phòng" ? "occupied" : b.status === "Đã trả phòng" ? "completed" : "cancelled";
+      return `
+        <tr>
+          <td><code style="font-weight:600; color:var(--navy);">${b.id}</code></td>
+          <td><b>${b.customer}</b></td>
+          <td>${b.hotel}</td>
+          <td>${new Date(b.checkIn).toLocaleDateString("vi-VN")} → ${new Date(b.checkOut).toLocaleDateString("vi-VN")}</td>
+          <td><b>${formatVND(b.total)}</b></td>
+          <td><span class="status ${statusClass}">${b.status}</span></td>
+        </tr>
+      `;
+    }).join("");
+
+    // Calculate Occupancy per hotel dynamically for bar chart
+    const barChartContainer = document.getElementById("bars");
+    barChartContainer.innerHTML = hotels.map(h => {
+      const hotelRooms = rooms.filter(r => r.hotelId === h.id);
+      const occupiedHotelRooms = hotelRooms.filter(r => r.status === "Đang sử dụng" || r.status === "Đã đặt");
+      const hotelOccRate = hotelRooms.length > 0 ? Math.round((occupiedHotelRooms.length / hotelRooms.length) * 100) : 0;
+      
+      const shortName = h.name.replace("Aurence ", "").split(" ")[0]; // short name
+      return `
+        <div class="bar" style="height:${hotelOccRate * 1.8}px">
+          <b>${hotelOccRate}%</b>
+          <span>${shortName}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // Setup Modal Actions
+  const modal = document.getElementById("add-booking-modal");
+  const openModalBtn = document.getElementById("new-booking-btn");
+  const closeModalBtn = document.getElementById("close-modal-btn");
+  const hotelSelect = document.getElementById("nb-hotel");
+  const roomSelect = document.getElementById("nb-room");
+
+  openModalBtn.addEventListener("click", () => {
+    // Populate hotels select
+    hotelSelect.innerHTML = hotels.map(h => `<option value="${h.id}">${h.name}</option>`).join("");
+    
+    // Set date defaults
+    const todayStr = new Date().toISOString().split("T")[0];
+    document.getElementById("nb-ci").value = todayStr;
+    document.getElementById("nb-ci").min = todayStr;
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById("nb-co").value = tomorrow.toISOString().split("T")[0];
+    document.getElementById("nb-co").min = todayStr;
+
+    updateRoomOptions();
+    modal.classList.add("open");
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    modal.classList.remove("open");
+  });
+
+  hotelSelect.addEventListener("change", updateRoomOptions);
+
+  function updateRoomOptions() {
+    const selectedHotelId = hotelSelect.value;
+    const hotelRooms = rooms.filter(r => r.hotelId === selectedHotelId && r.status === "Còn trống");
+    
+    if (hotelRooms.length === 0) {
+      roomSelect.innerHTML = `<option value="">-- Không còn phòng trống --</option>`;
+    } else {
+      roomSelect.innerHTML = hotelRooms.map(r => `<option value="${r.id}">${r.roomNumber} - ${r.name} (${r.price.toLocaleString("vi-VN")} ₫)</option>`).join("");
+    }
+  }
+
+  // Handle manual booking submit
+  document.getElementById("new-booking-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    
+    const customer = document.getElementById("nb-customer").value.trim();
+    const hotelId = hotelSelect.value;
+    const roomId = roomSelect.value;
+    const checkIn = document.getElementById("nb-ci").value;
+    const checkOut = document.getElementById("nb-co").value;
+
+    if (!customer || !roomId) {
+      alert("Vui lòng nhập đầy đủ thông tin.");
+      return;
+    }
+
+    if (new Date(checkOut) <= new Date(checkIn)) {
+      alert("Ngày trả phòng phải sau ngày nhận phòng.");
+      return;
+    }
+
+    const hotelObj = hotels.find(h => h.id === hotelId);
+    const roomObj = rooms.find(r => r.id === roomId);
+
+    // Calculate nights
+    const d1 = new Date(checkIn);
+    const d2 = new Date(checkOut);
+    const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
+
+    // Calculate total
+    const settings = LS.get("aurence.settings", { taxRate: 10, serviceFeeRate: 5 });
+    const subtotal = roomObj.price * nights;
+    const serviceFee = Math.round(subtotal * (settings.serviceFeeRate / 100));
+    const tax = Math.round(subtotal * (settings.taxRate / 100));
+    const total = subtotal + serviceFee + tax;
+
+    // Generate unique code
+    let newCode = "";
+    let isUnique = false;
+    while (!isUnique) {
+      newCode = "BK" + Math.floor(1000 + Math.random() * 9000);
+      isUnique = !bookings.some(b => b.id === newCode);
+    }
+
+    // Add booking
+    const newBooking = {
+      id: newCode,
+      customerId: "US" + Math.floor(100 + Math.random() * 900), // temp customer
+      customer: customer,
+      email: "guest@example.com",
+      phone: "0900000000",
+      idCard: "000000000000",
+      hotelId: hotelId,
+      hotel: hotelObj.name,
+      roomId: roomId,
+      room: roomObj.name,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      guests: 2,
+      status: "Đã xác nhận",
+      paymentMethod: "Tại quầy lễ tân",
+      paymentStatus: "Chờ thanh toán",
+      total: total,
+      services: []
+    };
+
+    bookings.unshift(newBooking);
+    LS.set("aurence.bookings", bookings);
+
+    // Update room status
+    roomObj.status = "Đã đặt";
+    LS.set("aurence.rooms", rooms);
+
+    // Close and refresh
+    modal.classList.remove("open");
+    document.getElementById("new-booking-form").reset();
+    
+    // Alert and reload data
+    const toastDiv = document.createElement("div");
+    toastDiv.className = "toast show";
+    toastDiv.textContent = "Đã thêm đặt phòng thành công: " + newCode;
+    document.body.appendChild(toastDiv);
+    setTimeout(() => toastDiv.remove(), 2500);
+    
+    loadAdminData();
+  });
+
+  // Initial trigger
+  loadAdminData();
+</script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Đánh giá dịch vụ — Aurence</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .review-box { background: #fff; border-radius: 20px; padding: 2.5rem; border: 1px solid var(--border); box-shadow: var(--shadow-soft); max-width: 650px; margin: 2rem auto; }
+  .rating-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+  .rating-row:last-child { border-bottom: none; }
+  .stars-input { display: flex; gap: 0.25rem; font-size: 1.5rem; color: #ecebe4; cursor: pointer; }
+  .stars-input span.active { color: var(--gold); }
+  .img-preview-box { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .img-preview-item { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); position: relative; }
+  .img-preview-item button { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; border: none; }
+</style>
+</head>
+<body data-page="dashboard">
+<div data-nav></div>
+
+<main class="container" style="padding-top:7rem; min-height:80vh;" id="root">
+  <div class="review-box" id="review-panel">
+    <div class="eyebrow text-center">Đánh giá lưu trú</div>
+    <h1 style="font-size:2rem; text-align:center; color:var(--navy);" class="mt-1">Đánh giá trải nghiệm</h1>
+    <p class="muted text-center mt-1" id="review-hotel-info">Cảm ơn bạn đã lựa chọn lưu trú tại Aurence. Vui lòng chia sẻ phản hồi của bạn để giúp chúng tôi hoàn thiện chất lượng dịch vụ.</p>
+    
+    <form id="review-form" class="mt-4">
+      <h3>Xếp hạng chi tiết</h3>
+      <div style="background: var(--bg); border:1px solid var(--border); border-radius:14px; padding:1rem; margin-top:0.75rem;">
+        <div class="rating-row">
+          <span>Trải nghiệm tổng thể</span>
+          <div class="stars-input" data-cat="overall">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <span>Chất lượng phòng</span>
+          <div class="stars-input" data-cat="room">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <span>Độ sạch sẽ</span>
+          <div class="stars-input" data-cat="clean">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <span>Thái độ phục vụ của nhân viên</span>
+          <div class="stars-input" data-cat="staff">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <span>Nhà hàng & Ẩm thực</span>
+          <div class="stars-input" data-cat="dining">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <span>Dịch vụ khách sạn chung</span>
+          <div class="stars-input" data-cat="service">
+            <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="mt-4">Nhận xét chi tiết</h3>
+      <div class="field mt-2">
+        <label>Ý kiến đóng góp của bạn</label>
+        <textarea class="textarea" id="rev-text" placeholder="Hãy chia sẻ cảm nhận thực tế của bạn về kỳ nghỉ..." required></textarea>
+      </div>
+
+      <h3 class="mt-4">Hình ảnh trải nghiệm</h3>
+      <div class="field mt-2">
+        <label>Tải ảnh lên (Tối đa 3 ảnh)</label>
+        <input type="file" id="rev-img-input" accept="image/*" class="input" style="padding: 0.5rem;" />
+        <div class="img-preview-box" id="preview-container"></div>
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <a href="dashboard.html" class="btn btn-outline btn-block">Để sau</a>
+        <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { LS } = AURENCE;
+  
+  let bookingsList = [];
+  let currentBooking = null;
+  const ratingData = { overall: 5, room: 5, clean: 5, staff: 5, dining: 5, service: 5 };
+  const base64Images = [];
+
+  const urlParams = new URLSearchParams(location.search);
+  const bookingId = urlParams.get("bookingId");
+
+  function loadPage() {
+    bookingsList = LS.get("aurence.bookings", AURENCE.bookings);
+
+    if (!bookingId) {
+      document.getElementById("review-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Thiếu mã đặt phòng</h3>
+          <p class="muted mt-2">Vui lòng chọn đơn đặt phòng đã hoàn tất từ Tổng quan để đánh giá.</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Về trang đặt phòng</a>
+        </div>
+      `;
+      return;
+    }
+
+    currentBooking = bookingsList.find(b => b.id.toUpperCase() === bookingId.toUpperCase());
+
+    if (!currentBooking) {
+      document.getElementById("review-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Không tìm thấy đơn hàng</h3>
+          <p class="muted mt-2">Đơn hàng mã số <b>${bookingId}</b> không tồn tại trong hệ thống.</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Về trang đặt phòng</a>
+        </div>
+      `;
+      return;
+    }
+
+    // Check status
+    if (currentBooking.status !== "Đã trả phòng") {
+      document.getElementById("review-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Không thể đánh giá đơn hàng này</h3>
+          <p class="muted mt-2">Đơn hàng hiện ở trạng thái <b>"${currentBooking.status}"</b>. Bạn chỉ được gửi đánh giá sau khi đã hoàn tất thủ tục <b>Trả phòng (Checked out)</b>.</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Về trang đặt phòng</a>
+        </div>
+      `;
+      return;
+    }
+
+    // Check if reviewed already
+    if (currentBooking.reviewed) {
+      document.getElementById("review-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Đơn hàng đã được đánh giá</h3>
+          <p class="muted mt-2">Cảm ơn bạn! Bạn đã thực hiện đánh giá cho kỳ nghỉ này trước đó. Mỗi đơn hàng chỉ có thể gửi đánh giá một lần.</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Quay lại trang đặt phòng</a>
+        </div>
+      `;
+      return;
+    }
+
+    document.getElementById("review-hotel-info").innerHTML = `Cảm ơn bạn đã lựa chọn lưu trú tại <b>${currentBooking.hotel}</b> (Phòng: ${currentBooking.room} · Mã đặt phòng: ${currentBooking.id}). Vui lòng chia sẻ phản hồi của bạn để giúp chúng tôi hoàn thiện chất lượng dịch vụ.`;
+
+    setupStars();
+    setupImageUpload();
+    setupFormSubmit();
+  }
+
+  function setupStars() {
+    // Initial highlight for all categories
+    document.querySelectorAll(".stars-input").forEach(container => {
+      const cat = container.dataset.cat;
+      const initialVal = ratingData[cat];
+      highlightStars(container, initialVal);
+
+      // Add click listener
+      container.querySelectorAll("span").forEach(star => {
+        star.addEventListener("click", () => {
+          const val = parseInt(star.dataset.v);
+          ratingData[cat] = val;
+          highlightStars(container, val);
+        });
+      });
+    });
+  }
+
+  function highlightStars(container, val) {
+    container.querySelectorAll("span").forEach(star => {
+      const v = parseInt(star.dataset.v);
+      star.classList.toggle("active", v <= val);
+    });
+  }
+
+  function setupImageUpload() {
+    const input = document.getElementById("rev-img-input");
+    const container = document.getElementById("preview-container");
+
+    input.addEventListener("change", (e) => {
+      const files = e.target.files;
+      if (files.length === 0) return;
+
+      if (base64Images.length >= 3) {
+        toast("Bạn chỉ có thể tải lên tối đa 3 hình ảnh.");
+        input.value = "";
+        return;
+      }
+
+      const file = files[0];
+      if (file.size > 2 * 1024 * 1024) {
+        toast("Dung lượng ảnh phải nhỏ hơn 2MB.");
+        input.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64Str = event.target.result;
+        base64Images.push(base64Str);
+        renderPreviews();
+        input.value = ""; // clear input for next selection
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPreviews() {
+    const container = document.getElementById("preview-container");
+    container.innerHTML = base64Images.map((src, idx) => `
+      <div class="img-preview-item">
+        <img src="${src}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;" />
+        <button type="button" onclick="removePreview(${idx})">×</button>
+      </div>
+    `).join("");
+  }
+
+  window.removePreview = function(idx) {
+    base64Images.splice(idx, 1);
+    renderPreviews();
+  };
+
+  function setupFormSubmit() {
+    const form = document.getElementById("review-form");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const comment = document.getElementById("rev-text").value.trim();
+      if (!comment) {
+        toast("Vui lòng viết nhận xét ý kiến của bạn.");
+        return;
+      }
+
+      // Generate unique review ID
+      const reviewsList = LS.get("aurence.reviews", AURENCE.reviews);
+      let newRevId = "";
+      let isUnique = false;
+      while (!isUnique) {
+        newRevId = "RV" + Math.floor(1000 + Math.random() * 9000);
+        isUnique = !reviewsList.some(r => r.id === newRevId);
+      }
+
+      // Formulate date in Vietnamese
+      const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+      const now = new Date();
+      const dateStr = `Tháng ${monthNames[now.getMonth()]}, ${now.getFullYear()}`;
+
+      // Find hotelId of the booking
+      const hotelName = currentBooking.hotel;
+      const hotelObj = AURENCE.hotels.find(h => h.name === hotelName) || { id: "aurence-danang" };
+
+      // Create review record
+      const newReview = {
+        id: newRevId,
+        hotelId: hotelObj.id,
+        hotelName: hotelName,
+        author: currentBooking.customer,
+        rating: ratingData.overall,
+        date: dateStr,
+        text: comment,
+        ratings: { ...ratingData },
+        images: base64Images
+      };
+
+      reviewsList.unshift(newReview);
+      LS.set("aurence.reviews", reviewsList);
+
+      // Set booking reviewed = true
+      currentBooking.reviewed = true;
+      const bookingsListAll = LS.get("aurence.bookings", AURENCE.bookings);
+      const bookingIdx = bookingsListAll.findIndex(b => b.id === currentBooking.id);
+      if (bookingIdx > -1) {
+        bookingsListAll[bookingIdx] = currentBooking;
+        LS.set("aurence.bookings", bookingsListAll);
+      }
+
+      // Dynamic average rating recalculation for this hotel
+      const hotelsListAll = LS.get("aurence.hotels", AURENCE.hotels);
+      const hObjAll = hotelsListAll.find(h => h.id === hotelObj.id);
+      if (hObjAll) {
+        // Calculate new rating average
+        const hotelRevs = reviewsList.filter(r => r.hotelId === hotelObj.id);
+        const sum = hotelRevs.reduce((acc, r) => acc + r.rating, 0);
+        hObjAll.rating = parseFloat((sum / hotelRevs.length).toFixed(1));
+        hObjAll.reviews = hotelRevs.length;
+        LS.set("aurence.hotels", hotelsListAll);
+      }
+
+      toast("Cảm ơn bạn! Đánh giá của bạn đã được gửi thành công.");
+      setTimeout(() => {
+        location.href = "dashboard.html";
+      }, 1500);
+    });
+  }
+
+  // Initial trigger
+  loadPage();
+</script>
+</body>
+</html>

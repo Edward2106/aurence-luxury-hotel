@@ -1,52 +1,75 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Reserve — Aurence Collection</title>
+<title>Đặt phòng — Bộ sưu tập Aurence</title>
 <link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  /* Modal styling */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 21, 48, 0.7);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: 20px; padding: 2.5rem; max-width: 500px; width: 90%;
+    box-shadow: var(--shadow-luxe); text-align: center; border: 1px solid var(--border);
+  }
+</style>
 </head>
 <body data-page="hotels">
 <div data-nav></div>
 
-<main class="container" style="padding-top:7rem">
-  <div class="eyebrow">Reservation</div>
-  <h1 class="mt-1">Complete your booking</h1>
+<main class="container" style="padding-top:7rem; min-height: 80vh;" id="root">
+  <div class="eyebrow">Đặt phòng</div>
+  <h1 class="mt-1">Hoàn tất đặt phòng của bạn</h1>
 
   <div class="stepper mt-3">
-    <div class="step done"><b>1. Dates</b><span>Confirmed</span></div>
-    <div class="step active"><b>2. Guest details</b><span>In progress</span></div>
-    <div class="step"><b>3. Payment</b><span>Pending</span></div>
-    <div class="step"><b>4. Confirmation</b><span>Pending</span></div>
+    <div class="step done"><b>1. Chọn ngày & phòng</b><span>Đã xác nhận</span></div>
+    <div class="step active"><b>2. Thông tin khách</b><span>Đang điền</span></div>
+    <div class="step"><b>3. Thanh toán</b><span>Chờ xử lý</span></div>
+    <div class="step"><b>4. Xác nhận</b><span>Chưa có</span></div>
   </div>
 
-  <div class="detail-layout">
+  <div class="detail-layout" id="booking-layout">
     <form id="book-form">
-      <h3>Guest information</h3>
+      <h3>Thông tin khách lưu trú</h3>
       <div class="grid grid-2 mt-2">
-        <div class="field"><label>First name</label><input class="input" name="first" required /></div>
-        <div class="field"><label>Last name</label><input class="input" name="last" required /></div>
-        <div class="field"><label>Email</label><input class="input" name="email" type="email" required /></div>
-        <div class="field"><label>Phone</label><input class="input" name="phone" required /></div>
-        <div class="field"><label>Country</label><input class="input" name="country" /></div>
-        <div class="field"><label>Special requests</label><input class="input" name="notes" placeholder="Anniversary, dietary…" /></div>
+        <div class="field"><label>Họ và tên khách hàng</label><input class="input" name="fullname" id="b-name" required /></div>
+        <div class="field"><label>Số CMND/CCCD/Hộ chiếu</label><input class="input" name="idcard" id="b-idcard" placeholder="Nhập số giấy tờ tùy thân..." required /></div>
+        <div class="field"><label>Địa chỉ Email</label><input class="input" name="email" type="email" id="b-email" required /></div>
+        <div class="field"><label>Số điện thoại</label><input class="input" name="phone" id="b-phone" placeholder="Ví dụ: 0901234567..." required /></div>
+        <div class="field"><label>Giờ nhận phòng dự kiến</label>
+          <select class="select" name="arrivalTime" id="b-arrival">
+            <option value="14:00">14:00 (Tiêu chuẩn)</option>
+            <option value="15:00">15:00</option>
+            <option value="16:00">16:00</option>
+            <option value="17:00">17:00</option>
+            <option value="18:00">18:00</option>
+            <option value="khac">Sau 18:00 (Nhận phòng muộn)</option>
+          </select>
+        </div>
+        <div class="field"><label>Yêu cầu đặc biệt</label><input class="input" name="notes" id="b-notes" placeholder="Dị ứng thực phẩm, kỷ niệm ngày cưới..." /></div>
       </div>
 
-      <h3 class="mt-4">Payment method</h3>
+      <h3 class="mt-4">Phương thức thanh toán</h3>
       <div class="grid grid-3 mt-2">
-        <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="card" checked /> Card</label>
+        <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="card" checked /> Thẻ tín dụng</label>
         <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="paypal" /> PayPal</label>
         <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="applepay" /> Apple Pay</label>
       </div>
+      
       <div class="grid grid-2 mt-2" id="card-fields">
-        <div class="field" style="grid-column:span 2"><label>Card number</label><input class="input" placeholder="1234 5678 9012 3456" /></div>
-        <div class="field"><label>Expiry</label><input class="input" placeholder="MM/YY" /></div>
-        <div class="field"><label>CVC</label><input class="input" placeholder="123" /></div>
+        <div class="field" style="grid-column:span 2"><label>Số thẻ</label><input class="input" placeholder="4111 2222 3333 4444" id="c-num" /></div>
+        <div class="field"><label>Ngày hết hạn</label><input class="input" placeholder="MM/YY" id="c-exp" /></div>
+        <div class="field"><label>Mã bảo mật CVC</label><input class="input" placeholder="123" id="c-cvc" /></div>
       </div>
 
       <div class="mt-3 flex gap-2">
-        <a href="hotels.html" class="btn btn-outline">Back</a>
-        <button class="btn btn-primary btn-lg" type="submit">Confirm reservation</button>
+        <button type="button" class="btn btn-outline" onclick="history.back()">Quay lại</button>
+        <button class="btn btn-primary btn-lg" type="submit">Xác nhận đặt phòng</button>
       </div>
     </form>
 
@@ -54,44 +77,205 @@
       <img id="sum-img" style="width:100%;border-radius:12px;aspect-ratio:4/3;object-fit:cover" />
       <div style="font-family:var(--font-display);font-size:1.25rem;margin-top:1rem" id="sum-name"></div>
       <div class="muted" id="sum-loc"></div>
-      <div class="row mt-2"><span>Check in</span><b id="sum-ci">Aug 12, 2026</b></div>
-      <div class="row"><span>Check out</span><b id="sum-co">Aug 15, 2026</b></div>
-      <div class="row"><span>Guests</span><b>2 adults</b></div>
-      <div class="row"><span>3 nights</span><b id="sum-sub"></b></div>
-      <div class="row"><span>Taxes & service</span><b id="sum-tax"></b></div>
-      <div class="row" style="border-top:1px solid var(--border);padding-top:0.75rem"><b>Total</b><b id="sum-total" style="font-family:var(--font-display);font-size:1.25rem"></b></div>
+      <div class="muted" id="sum-room" style="font-size:0.9rem; margin-top:0.25rem;"></div>
+      
+      <div class="row mt-3"><span>Ngày nhận phòng</span><b id="sum-ci"></b></div>
+      <div class="row"><span>Ngày trả phòng</span><b id="sum-co"></b></div>
+      <div class="row"><span>Số khách</span><b id="sum-guests"></b></div>
+      
+      <div class="row" style="border-top:1px solid var(--border); margin-top:0.75rem; padding-top:0.75rem">
+        <span>Đơn giá phòng / đêm</span><b id="sum-roomprice"></b>
+      </div>
+      <div class="row"><span>Số đêm lưu trú</span><b id="sum-nights"></b></div>
+      <div class="row"><span>Phí dịch vụ</span><b id="sum-service"></b></div>
+      <div class="row"><span>Thuế GTGT</span><b id="sum-tax"></b></div>
+      <div class="row" style="border-top:1px solid var(--border);padding-top:0.75rem"><b>Tổng cộng</b><b id="sum-total" style="font-family:var(--font-display);font-size:1.25rem"></b></div>
     </aside>
   </div>
 </main>
+
+<div class="modal-overlay" id="success-modal">
+  <div class="modal-box">
+    <div style="font-size:4rem;color:var(--gold)">✦</div>
+    <h2 class="mt-2" style="color:var(--navy)">Đặt phòng thành công!</h2>
+    <p class="muted mt-1">Đơn đặt phòng của bạn đã được hệ thống xác nhận.</p>
+    
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin:1.5rem 0; text-align:left;">
+      <div class="flex justify-between" style="padding:0.25rem 0"><span>Mã đặt phòng:</span><b id="m-code" style="color:var(--gold); font-size:1.15rem;"></b></div>
+      <div class="flex justify-between" style="padding:0.25rem 0"><span>Khách sạn:</span><b id="m-hotel"></b></div>
+      <div class="flex justify-between" style="padding:0.25rem 0"><span>Loại phòng:</span><b id="m-room"></b></div>
+      <div class="flex justify-between" style="padding:0.25rem 0"><span>Thời gian:</span><b id="m-dates"></b></div>
+      <div class="flex justify-between" style="padding:0.25rem 0"><span>Tổng tiền:</span><b id="m-total" style="color:var(--navy)"></b></div>
+    </div>
+    
+    <button class="btn btn-navy btn-block" id="modal-close-btn">Đóng & Xem đặt phòng của tôi</button>
+  </div>
+</div>
 
 <div data-footer></div>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-  const { hotels, LS } = AURENCE;
-  const id = new URLSearchParams(location.search).get("hotel") || hotels[0].id;
-  const h = hotels.find(x => x.id === id) || hotels[0];
-  document.getElementById("sum-img").src = h.image;
-  document.getElementById("sum-name").textContent = h.name;
-  document.getElementById("sum-loc").textContent = h.location + ", " + h.country;
-  const sub = h.price * 3, tax = Math.round(sub * 0.12);
-  document.getElementById("sum-sub").textContent = "$" + sub;
-  document.getElementById("sum-tax").textContent = "$" + tax;
-  document.getElementById("sum-total").textContent = "$" + (sub + tax);
+  const { LS } = AURENCE;
+  
+  // Load draft booking
+  const draft = LS.get("aurence.bookingDraft");
+  const profile = LS.get("aurence.profile", {});
+  const hotelsList = LS.get("aurence.hotels", AURENCE.hotels);
+  const roomsList = LS.get("aurence.rooms", AURENCE.rooms);
+  
+  if (!draft) {
+    document.getElementById("root").innerHTML = `
+      <div style="text-align:center; padding:5rem 0">
+        <h2 class="text-gold">Chưa có thông tin đặt phòng</h2>
+        <p class="muted mt-2">Vui lòng quay lại danh sách khách sạn và chọn loại phòng trước khi thực hiện đặt chỗ.</p>
+        <a href="hotels.html" class="btn btn-navy mt-3">Xem danh sách khách sạn</a>
+      </div>
+    `;
+  } else {
+    // Fill summary box
+    const hotel = hotelsList.find(h => h.id === draft.hotelId) || hotelsList[0];
+    const room = roomsList.find(r => r.id === draft.roomId) || roomsList[0];
+    
+    document.getElementById("sum-img").src = hotel.image;
+    document.getElementById("sum-name").textContent = hotel.name;
+    document.getElementById("sum-loc").textContent = hotel.location;
+    document.getElementById("sum-room").textContent = `Loại phòng: ${draft.roomName}`;
+    document.getElementById("sum-ci").textContent = new Date(draft.checkIn).toLocaleDateString("vi-VN");
+    document.getElementById("sum-co").textContent = new Date(draft.checkOut).toLocaleDateString("vi-VN");
+    document.getElementById("sum-guests").textContent = `${draft.guests} người lớn`;
+    
+    document.getElementById("sum-roomprice").textContent = window.formatVND(draft.price);
+    document.getElementById("sum-nights").textContent = `${draft.nights} đêm`;
+    document.getElementById("sum-service").textContent = window.formatVND(draft.serviceFee);
+    document.getElementById("sum-tax").textContent = window.formatVND(draft.tax);
+    document.getElementById("sum-total").textContent = window.formatVND(draft.total);
 
-  document.getElementById("book-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const list = LS.get("aurence.bookings", []);
-    const id2 = "BK-" + Math.floor(1000 + Math.random()*9000);
-    const fd = new FormData(e.target);
-    list.unshift({ id: id2, customer: `${fd.get("first")} ${fd.get("last")}`, hotel: h.name, room: "Deluxe Ocean Suite", checkIn: "2026-08-12", checkOut: "2026-08-15", status: "Confirmed", total: sub + tax });
-    LS.set("aurence.bookings", list);
-    toast("Reservation confirmed — " + id2);
-    setTimeout(() => location.href = "dashboard.html", 900);
-  });
-  document.querySelectorAll('input[name="pay"]').forEach(r => r.addEventListener("change", () => {
-    document.getElementById("card-fields").style.display = r.value === "card" && r.checked ? "grid" : "none";
-  }));
+    // Pre-fill customer form if available from profile
+    if (profile) {
+      document.getElementById("b-name").value = (profile.lastName || "") + " " + (profile.firstName || "");
+      document.getElementById("b-email").value = profile.email || "";
+      document.getElementById("b-phone").value = profile.phone || "";
+      document.getElementById("b-idcard").value = profile.idCard || "";
+    }
+
+    // Toggle card fields visibility based on payment method
+    document.querySelectorAll('input[name="pay"]').forEach(r => r.addEventListener("change", () => {
+      document.getElementById("card-fields").style.display = r.value === "card" && r.checked ? "grid" : "none";
+    }));
+
+    // Form Submission
+    document.getElementById("book-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const fullname = document.getElementById("b-name").value.trim();
+      const idcard = document.getElementById("b-idcard").value.trim();
+      const email = document.getElementById("b-email").value.trim();
+      const phone = document.getElementById("b-phone").value.trim();
+      const arrival = document.getElementById("b-arrival").value;
+      const notes = document.getElementById("b-notes").value.trim();
+      const payMethod = document.querySelector('input[name="pay"]:checked').value;
+
+      // Validation
+      if (!fullname || !idcard || !email || !phone) {
+        toast("Vui lòng điền đầy đủ các trường thông tin bắt buộc.");
+        return;
+      }
+
+      // Valid email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        toast("Vui lòng nhập địa chỉ Email hợp lệ.");
+        return;
+      }
+
+      // Valid phone format (Vietnamese phone regex)
+      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      if (!phoneRegex.test(phone)) {
+        toast("Vui lòng nhập số điện thoại Việt Nam hợp lệ (10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09).");
+        return;
+      }
+
+      // Validate capacity limit again
+      if (room && draft.guests > room.capacity) {
+        toast(`Số lượng khách (${draft.guests}) vượt quá sức chứa tối đa của phòng (${room.capacity} khách).`);
+        return;
+      }
+
+      // Card validation if selected card payment
+      if (payMethod === "card") {
+        const cNum = document.getElementById("c-num").value.trim();
+        const cExp = document.getElementById("c-exp").value.trim();
+        const cCvc = document.getElementById("c-cvc").value.trim();
+        if (!cNum || !cExp || !cCvc) {
+          toast("Vui lòng nhập đầy đủ thông tin thẻ thanh toán.");
+          return;
+        }
+      }
+
+      // Generate unique booking code e.g. BK0011, BK8291
+      const bookingsList = LS.get("aurence.bookings", AURENCE.bookings);
+      let newCode = "";
+      let isUnique = false;
+      while (!isUnique) {
+        newCode = "BK" + Math.floor(1000 + Math.random() * 9000);
+        isUnique = !bookingsList.some(b => b.id === newCode);
+      }
+
+      // Create new booking record
+      const newBooking = {
+        id: newCode,
+        customerId: profile.id || "US001",
+        customer: fullname,
+        email: email,
+        phone: phone,
+        idCard: idcard,
+        hotelId: draft.hotelId,
+        hotel: draft.hotelName,
+        roomId: draft.roomId,
+        room: draft.roomName,
+        checkIn: draft.checkIn,
+        checkOut: draft.checkOut,
+        guests: draft.guests,
+        status: "Đã xác nhận",
+        paymentMethod: payMethod === "card" ? "Thẻ tín dụng" : payMethod === "paypal" ? "PayPal" : "Apple Pay",
+        paymentStatus: "Đã thanh toán",
+        arrivalTime: arrival,
+        notes: notes,
+        total: draft.total,
+        services: []
+      };
+
+      // Push to bookings and save
+      bookingsList.unshift(newBooking);
+      LS.set("aurence.bookings", bookingsList);
+
+      // Lock room status in admin rooms representation
+      const roomsListAll = LS.get("aurence.rooms", AURENCE.rooms);
+      const targetRoomAll = roomsListAll.find(r => r.id === draft.roomId);
+      if (targetRoomAll) {
+        targetRoomAll.status = "Đã đặt";
+        LS.set("aurence.rooms", roomsListAll);
+      }
+
+      // Clear draft booking
+      LS.set("aurence.bookingDraft", null);
+
+      // Show success modal
+      document.getElementById("m-code").textContent = newCode;
+      document.getElementById("m-hotel").textContent = draft.hotelName;
+      document.getElementById("m-room").textContent = draft.roomName;
+      document.getElementById("m-dates").textContent = `${new Date(draft.checkIn).toLocaleDateString("vi-VN")} → ${new Date(draft.checkOut).toLocaleDateString("vi-VN")}`;
+      document.getElementById("m-total").textContent = window.formatVND(draft.total);
+
+      const modal = document.getElementById("success-modal");
+      modal.classList.add("open");
+    });
+
+    document.getElementById("modal-close-btn").addEventListener("click", () => {
+      location.href = "dashboard.html";
+    });
+  }
 </script>
 </body>
 </html>

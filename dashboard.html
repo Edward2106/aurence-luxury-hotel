@@ -1,42 +1,63 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>My stays — Aurence</title>
+<title>Tổng quan của tôi — Aurence</title>
 <link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .dashboard-section { margin-top: 2.5rem; }
+  .booking-row-card {
+    display: grid; grid-template-columns: 1fr auto; align-items: center;
+    padding: 1.5rem; margin-bottom: 1rem; background: var(--card);
+    border-radius: 16px; border: 1px solid var(--border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .booking-row-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+  .booking-actions-btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; justify-content: flex-end; }
+  @media (max-width: 768px) {
+    .booking-row-card { grid-template-columns: 1fr; gap: 1rem; }
+    .booking-actions-btn-group { justify-content: flex-start; }
+  }
+</style>
 </head>
 <body data-page="dashboard">
 <div data-nav></div>
 
-<main class="container" style="padding-top:7rem">
+<main class="container" style="padding-top:7rem; min-height: 80vh;">
   <div class="section-head">
     <div>
-      <div class="eyebrow">Welcome back</div>
-      <h1 class="mt-1" id="greet">Good evening, Amelia.</h1>
-      <p class="muted mt-1">Your journey with Aurence, at a glance.</p>
+      <div class="eyebrow">Chào mừng quay trở lại</div>
+      <h1 class="mt-1" id="greet">Xin chào khách quý.</h1>
+      <p class="muted mt-1">Hành trình trải nghiệm của bạn cùng Aurence.</p>
     </div>
-    <div class="chip" style="padding:0.75rem 1.25rem;background:var(--gold-soft);border-color:var(--gold);color:var(--navy)">✦ Platinum member</div>
+    <div class="chip" style="padding:0.75rem 1.25rem;background:var(--gold-soft);border-color:var(--gold);color:var(--navy)" id="p-tier">✦ Hội viên Platinum</div>
   </div>
 
   <div class="grid grid-4 mt-3">
-    <div class="stat"><div class="lbl">Upcoming</div><div class="val" id="s-upcoming">0</div><div class="trend">next stays</div></div>
-    <div class="stat"><div class="lbl">Total stays</div><div class="val">12</div><div class="trend">since 2021</div></div>
-    <div class="stat"><div class="lbl">Loyalty points</div><div class="val">42,580</div><div class="trend">+2,400 pending</div></div>
-    <div class="stat"><div class="lbl">Nights this year</div><div class="val">27</div><div class="trend">+4 vs last year</div></div>
+    <div class="stat"><div class="lbl">Đặt phòng sắp tới</div><div class="val" id="s-upcoming">0</div><div class="trend">đơn đã xác nhận</div></div>
+    <div class="stat"><div class="lbl">Tổng số đêm nghỉ</div><div class="val" id="s-total-nights">0</div><div class="trend">đã lưu trú</div></div>
+    <div class="stat"><div class="lbl">Điểm tích lũy</div><div class="val" id="s-points">0</div><div class="trend">quy đổi từ chi tiêu</div></div>
+    <div class="stat"><div class="lbl">Hạng thành viên</div><div class="val" id="s-tier-name">Platinum</div><div class="trend">Quyền lợi đặc quyền</div></div>
   </div>
 
-  <div class="section-head mt-4"><h2>Upcoming stays</h2><a class="btn btn-outline btn-sm" href="hotels.html">New reservation</a></div>
-  <div class="mt-2" id="upcoming"></div>
+  <div class="dashboard-section">
+    <div class="section-head"><h2>Chuyến đi sắp tới & Hiện tại</h2><a class="btn btn-outline btn-sm" href="hotels.html">+ Tạo đặt phòng mới</a></div>
+    <div class="mt-2" id="upcoming-list"></div>
+  </div>
 
-  <div class="section-head mt-4"><h2>Past stays</h2></div>
-  <div class="mt-2" id="past"></div>
+  <div class="dashboard-section">
+    <div class="section-head"><h2>Lịch sử chuyến đi</h2></div>
+    <div class="mt-2" id="past-list"></div>
+  </div>
 
-  <div class="section-head mt-4"><h2>Quick actions</h2></div>
-  <div class="grid grid-3 mt-2">
-    <a href="checkin.html" class="card" style="padding:1.5rem"><b>✦ Online check-in</b><p class="muted mt-1">Skip the front desk.</p></a>
-    <a href="services.html" class="card" style="padding:1.5rem"><b>✧ In-stay services</b><p class="muted mt-1">Request dining, spa & more.</p></a>
-    <a href="profile.html" class="card" style="padding:1.5rem"><b>✦ Preferences</b><p class="muted mt-1">Update your travel profile.</p></a>
+  <div class="dashboard-section">
+    <div class="section-head"><h2>Tiện ích nhanh</h2></div>
+    <div class="grid grid-3 mt-2">
+      <a href="checkin.html" class="card" style="padding:1.5rem"><b>✦ Nhận phòng trực tuyến</b><p class="muted mt-1">Làm thủ tục trước để nhận khóa phòng số nhanh chóng.</p></a>
+      <a href="services.html" class="card" style="padding:1.5rem"><b>✧ Gọi dịch vụ phòng</b><p class="muted mt-1">Yêu cầu ẩm thực, spa, giặt là hay dọn phòng ngay tại chỗ.</p></a>
+      <a href="profile.html" class="card" style="padding:1.5rem"><b>✦ Hồ sơ & Sở thích</b><p class="muted mt-1">Cập nhật thông tin cá nhân và yêu cầu lưu trú yêu thích.</p></a>
+    </div>
   </div>
 </main>
 
@@ -45,30 +66,133 @@
 <script src="assets/js/app.js"></script>
 <script>
   const { LS } = AURENCE;
-  const bookings = LS.get("aurence.bookings", []);
-  const now = new Date();
-  const upcoming = bookings.filter(b => new Date(b.checkIn) >= now || b.status === "Confirmed" || b.status === "Pending");
-  const past = bookings.filter(b => !upcoming.includes(b));
-  document.getElementById("s-upcoming").textContent = upcoming.length;
+  
+  function renderDashboard() {
+    const bookings = LS.get("aurence.bookings", AURENCE.bookings);
+    const profile = LS.get("aurence.profile", { firstName: "Quý khách", tier: "Platinum" });
+    
+    // Greet user
+    const hr = new Date().getHours();
+    let timeGreeting = "Chào buổi tối";
+    if (hr < 12) timeGreeting = "Chào buổi sáng";
+    else if (hr < 18) timeGreeting = "Chào buổi chiều";
+    document.getElementById("greet").textContent = `${timeGreeting}, ${profile.lastName || ""} ${profile.firstName || "Khách quý"}.`;
+    document.getElementById("p-tier").textContent = `✦ Hội viên ${profile.tier}`;
+    document.getElementById("s-tier-name").textContent = profile.tier;
 
-  const row = (b) => `
-    <div class="card" style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:1.25rem 1.5rem;margin-bottom:0.75rem">
-      <div>
-        <b style="font-family:var(--font-display);font-size:1.15rem">${b.hotel}</b>
-        <div class="muted mt-1">${b.room} · ${b.checkIn} → ${b.checkOut} · ${b.id}</div>
-      </div>
-      <div style="text-align:right">
-        <span class="status ${b.status.toLowerCase()}">${b.status}</span>
-        <div class="mt-1"><b>$${b.total.toLocaleString()}</b></div>
-        <a class="btn btn-outline btn-sm mt-1" href="checkin.html">Check in</a>
-      </div>
-    </div>`;
-  document.getElementById("upcoming").innerHTML = upcoming.map(row).join("") || `<div class="muted">No upcoming stays.</div>`;
-  document.getElementById("past").innerHTML = past.map(row).join("") || `<div class="muted">No past stays yet.</div>`;
+    // Filter bookings for Tuấn (demo account) or just show all for easy demo
+    const myBookings = bookings; 
 
-  const hr = new Date().getHours();
-  const p = LS.get("aurence.profile");
-  document.getElementById("greet").textContent = `${hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening"}, ${p.firstName}.`;
+    // Stats calculations
+    const upcomingBookings = myBookings.filter(b => b.status === "Đã xác nhận" || b.status === "Đã nhận phòng");
+    const pastBookings = myBookings.filter(b => b.status === "Đã trả phòng" || b.status === "Đã hủy");
+
+    // Upcoming count
+    document.getElementById("s-upcoming").textContent = myBookings.filter(b => b.status === "Đã xác nhận").length;
+    
+    // Total nights stayed calculation (from completed stays)
+    let totalNights = 0;
+    let totalSpent = 0;
+    myBookings.forEach(b => {
+      if (b.status === "Đã trả phòng") {
+        // Calculate nights
+        const d1 = new Date(b.checkIn);
+        const d2 = new Date(b.checkOut);
+        const diff = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
+        totalNights += diff;
+        totalSpent += b.total;
+      }
+    });
+    document.getElementById("s-total-nights").textContent = totalNights;
+    
+    // Loyalty points (1 point per 2,000 VND spent)
+    const points = Math.round(totalSpent / 2000);
+    document.getElementById("s-points").textContent = points.toLocaleString("vi-VN");
+
+    // Card rendering helper
+    const renderCard = (b) => {
+      const formattedTotal = window.formatVND ? window.formatVND(b.total) : (b.total.toLocaleString() + " ₫");
+      let actionsHTML = "";
+
+      if (b.status === "Đã xác nhận") {
+        actionsHTML = `
+          <a class="btn btn-navy btn-sm" href="checkin.html?bookingId=${b.id}">Nhận phòng (Online)</a>
+          <button class="btn btn-outline btn-sm" onclick="cancelBooking('${b.id}')">Hủy đặt phòng</button>
+        `;
+      } else if (b.status === "Đã nhận phòng") {
+        actionsHTML = `
+          <a class="btn btn-primary btn-sm" href="services.html?bookingId=${b.id}">Dịch vụ phòng</a>
+          <a class="btn btn-navy btn-sm" href="checkout.html?bookingId=${b.id}">Trả phòng & Folio</a>
+        `;
+      } else if (b.status === "Đã trả phòng") {
+        actionsHTML = `
+          <a class="btn btn-outline btn-sm" href="checkout.html?bookingId=${b.id}&viewInvoice=true">In hóa đơn</a>
+          <a class="btn btn-primary btn-sm" href="review.html?bookingId=${b.id}">Đánh giá dịch vụ</a>
+        `;
+      }
+
+      return `
+        <div class="booking-row-card">
+          <div>
+            <b style="font-family:var(--font-display);font-size:1.25rem; color:var(--navy);">${b.hotel}</b>
+            <div class="muted mt-1" style="font-size:0.9rem">
+              Loại phòng: <b>${b.room}</b> · Mã đơn: <code style="color:var(--gold); font-weight:600;">${b.id}</code><br/>
+              Thời gian: <b>${new Date(b.checkIn).toLocaleDateString("vi-VN")}</b> → <b>${new Date(b.checkOut).toLocaleDateString("vi-VN")}</b>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <span class="status ${getStatusClass(b.status)}">${b.status}</span>
+            <div class="mt-1" style="font-size:1.15rem; font-weight:600;">${formattedTotal}</div>
+            <div class="booking-actions-btn-group">
+              ${actionsHTML}
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    document.getElementById("upcoming-list").innerHTML = upcomingBookings.map(renderCard).join("") || `<div class="muted" style="padding:1.5rem 0;">Không có chuyến đi nào sắp tới hoặc đang hoạt động.</div>`;
+    document.getElementById("past-list").innerHTML = pastBookings.map(renderCard).join("") || `<div class="muted" style="padding:1.5rem 0;">Chưa có lịch sử chuyến đi nào.</div>`;
+  }
+
+  function getStatusClass(status) {
+    switch (status) {
+      case "Đã xác nhận": return "confirmed";
+      case "Đã nhận phòng": return "occupied";
+      case "Đã trả phòng": return "completed";
+      case "Đã hủy": return "cancelled";
+      default: return "pending";
+    }
+  }
+
+  window.cancelBooking = function(bookingId) {
+    if (!confirm(`Bạn có chắc chắn muốn hủy đơn đặt phòng ${bookingId}?`)) return;
+
+    const bookings = LS.get("aurence.bookings", AURENCE.bookings);
+    const b = bookings.find(x => x.id === bookingId);
+    if (b) {
+      b.status = "Đã hủy";
+      LS.set("aurence.bookings", bookings);
+      
+      // Update room status back to "Còn trống"
+      const rooms = LS.get("aurence.rooms", AURENCE.rooms);
+      // Try to find the matching room in database
+      const hotelObj = AURENCE.hotels.find(h => h.name === b.hotel);
+      if (hotelObj) {
+        const roomObj = rooms.find(r => r.hotelId === hotelObj.id && r.name === b.room);
+        if (roomObj) {
+          roomObj.status = "Còn trống";
+          LS.set("aurence.rooms", rooms);
+        }
+      }
+      
+      toast("Đã hủy đặt phòng thành công.");
+      renderDashboard();
+    }
+  };
+
+  // Initial load
+  renderDashboard();
 </script>
 </body>
 </html>

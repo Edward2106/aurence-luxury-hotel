@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cài đặt hệ thống — Admin Aurence</title>
+<link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body data-admin="settings" data-no-concierge>
+<div class="admin-shell"><div data-admin-nav></div>
+<main class="admin-main">
+  <div class="admin-head">
+    <div><div class="eyebrow">Cấu hình hệ thống</div><h1>Cài đặt</h1></div>
+    <button class="btn btn-primary" id="save-btn">Lưu cấu hình</button>
+  </div>
+
+  <div class="grid grid-2 mt-4">
+    <!-- General settings -->
+    <div class="card" style="padding:2rem">
+      <h3>Thông tin hệ thống</h3>
+      <div class="field mt-2"><label>Tên thương hiệu khách sạn</label><input class="input" id="s-brand" value="Aurence Collection" /></div>
+      <div class="field mt-2"><label>Email chăm sóc khách hàng</label><input class="input" id="s-email" value="care@aurence.com" /></div>
+      
+      <div class="grid grid-2 mt-2">
+        <div class="field"><label>Đồng tiền mặc định</label>
+          <select class="select" id="s-currency">
+            <option value="VND">VND (Việt Nam Đồng)</option>
+            <option value="USD">USD (Đô la Mỹ)</option>
+          </select>
+        </div>
+        <div class="field"><label>Ngôn ngữ mặc định</label>
+          <select class="select" id="s-lang">
+            <option value="Vietnamese">Tiếng Việt (Vietnamese)</option>
+            <option value="English">Tiếng Anh (English)</option>
+          </select>
+        </div>
+      </div>
+      
+      <h3 class="mt-4">Chính sách & Chi phí</h3>
+      <div class="grid grid-2 mt-2">
+        <div class="field"><label>Thuế suất GTGT (%)</label><input class="input" type="number" id="s-tax" value="10" /></div>
+        <div class="field"><label>Phí dịch vụ khách sạn (%)</label><input class="input" type="number" id="s-fee" value="5" /></div>
+        <div class="field"><label>Giờ nhận phòng tiêu chuẩn</label><input class="input" type="time" id="s-ci-time" value="14:00" /></div>
+        <div class="field"><label>Giờ trả phòng tiêu chuẩn</label><input class="input" type="time" id="s-co-time" value="12:00" /></div>
+      </div>
+      <div class="field mt-2">
+        <label>Chính sách hủy đặt phòng</label>
+        <textarea class="textarea" id="s-policy" style="min-height:90px;">Miễn phí hủy phòng trước 48 giờ kể từ ngày nhận phòng.</textarea>
+      </div>
+    </div>
+    
+    <!-- Notification settings -->
+    <div class="card" style="padding:2rem">
+      <h3>Thông báo tự động</h3>
+      <label class="check-row mt-2"><input type="checkbox" id="n-email-confirm" checked /> Gửi Email xác nhận đặt đơn hàng tự động</label>
+      <label class="check-row"><input type="checkbox" id="n-sms-remind" checked /> Gửi tin nhắn SMS nhắc nhở nhận phòng (Check-in)</label>
+      <label class="check-row"><input type="checkbox" id="n-mkt-mail" /> Nhận bản tin khuyến mãi & tiếp thị</label>
+      <label class="check-row"><input type="checkbox" id="n-review-req" checked /> Tự động gửi Email yêu cầu đánh giá sau khi trả phòng</label>
+      
+      <h3 class="mt-4">Quy chuẩn bảo mật</h3>
+      <label class="check-row mt-2"><input type="checkbox" id="sec-2fa" checked /> Yêu cầu xác thực hai yếu tố (2FA) đối với quản trị viên</label>
+      <label class="check-row"><input type="checkbox" id="sec-timeout" checked /> Tự động đăng xuất sau 30 phút không hoạt động</label>
+      
+      <div style="border-top:1px solid var(--border); margin-top:1.5rem; padding-top:1rem;">
+        <button class="btn btn-outline" id="rotate-api-btn">Làm mới khóa API kết nối</button>
+      </div>
+    </div>
+  </div>
+</main></div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  const { LS } = AURENCE;
+  
+  let settings = {};
+
+  function loadSettings() {
+    settings = LS.get("aurence.settings", { 
+      brandName: "Aurence Collection", 
+      supportEmail: "care@aurence.com", 
+      currency: "VND", 
+      taxRate: 10, 
+      serviceFeeRate: 5,
+      checkInTime: "14:00",
+      checkOutTime: "12:00",
+      cancellationPolicy: "Miễn phí hủy phòng trước 48 giờ kể từ ngày nhận phòng.",
+      language: "Vietnamese"
+    });
+
+    // Fill inputs
+    document.getElementById("s-brand").value = settings.brandName || "Aurence Collection";
+    document.getElementById("s-email").value = settings.supportEmail || "care@aurence.com";
+    document.getElementById("s-currency").value = settings.currency || "VND";
+    document.getElementById("s-lang").value = settings.language || "Vietnamese";
+    document.getElementById("s-tax").value = settings.taxRate || 10;
+    document.getElementById("s-fee").value = settings.serviceFeeRate || 5;
+    document.getElementById("s-ci-time").value = settings.checkInTime || "14:00";
+    document.getElementById("s-co-time").value = settings.checkOutTime || "12:00";
+    document.getElementById("s-policy").value = settings.cancellationPolicy || "";
+
+    // Load checkbox values from localStorage if available, or use defaults
+    document.getElementById("n-email-confirm").checked = settings.emailConfirm !== false;
+    document.getElementById("n-sms-remind").checked = settings.smsRemind !== false;
+    document.getElementById("n-mkt-mail").checked = settings.mktMail === true;
+    document.getElementById("n-review-req").checked = settings.reviewReq !== false;
+    document.getElementById("sec-2fa").checked = settings.sec2FA !== false;
+    document.getElementById("sec-timeout").checked = settings.secTimeout !== false;
+  }
+
+  document.getElementById("save-btn").addEventListener("click", () => {
+    // Collect values
+    settings.brandName = document.getElementById("s-brand").value.trim();
+    settings.supportEmail = document.getElementById("s-email").value.trim();
+    settings.currency = document.getElementById("s-currency").value;
+    settings.language = document.getElementById("s-lang").value;
+    settings.taxRate = parseFloat(document.getElementById("s-tax").value) || 0;
+    settings.serviceFeeRate = parseFloat(document.getElementById("s-fee").value) || 0;
+    settings.checkInTime = document.getElementById("s-ci-time").value;
+    settings.checkOutTime = document.getElementById("s-co-time").value;
+    settings.cancellationPolicy = document.getElementById("s-policy").value.trim();
+
+    // Checkboxes
+    settings.emailConfirm = document.getElementById("n-email-confirm").checked;
+    settings.smsRemind = document.getElementById("n-sms-remind").checked;
+    settings.mktMail = document.getElementById("n-mkt-mail").checked;
+    settings.reviewReq = document.getElementById("n-review-req").checked;
+    settings.sec2FA = document.getElementById("sec-2fa").checked;
+    settings.secTimeout = document.getElementById("sec-timeout").checked;
+
+    LS.set("aurence.settings", settings);
+    toast("Đã lưu cài đặt hệ thống thành công.");
+  });
+
+  document.getElementById("rotate-api-btn").addEventListener("click", () => {
+    toast("Đã làm mới và đồng bộ lại các khóa API dịch vụ.");
+  });
+
+  function toast(msg) {
+    const t = document.createElement("div");
+    t.className = "toast show";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+  }
+
+  // Initial trigger
+  loadSettings();
+</script>
+</body>
+</html>

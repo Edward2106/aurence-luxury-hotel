@@ -1,60 +1,162 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Admin dashboard — Aurence</title>
-<link rel="stylesheet" href="../assets/css/style.css" />
+<title>Aurence — Trải nghiệm lưu trú đẳng cấp, dịch vụ thượng hạng</title>
+<meta name="description" content="Một bộ sưu tập tư nhân gồm những khách sạn sang trọng huyền thoại trên thế giới. Đặt trước biệt thự hướng biển, lâu đài trên núi và căn hộ cao cấp cùng Aurence." />
+<link rel="stylesheet" href="assets/css/style.css" />
 </head>
-<body data-admin="dash" data-no-concierge>
-<div class="admin-shell">
-  <div data-admin-nav></div>
-  <main class="admin-main">
-    <div class="admin-head">
-      <div><div class="eyebrow">Overview</div><h1>Good afternoon, Isabelle.</h1></div>
-      <div class="flex gap-2"><button class="btn btn-outline">Export</button><button class="btn btn-primary">+ New booking</button></div>
-    </div>
+<body data-page="home">
+<div data-nav data-nav-transparent></div>
 
-    <div class="grid grid-4">
-      <div class="stat"><div class="lbl">Revenue (mo)</div><div class="val">$482K</div><div class="trend">+12% vs prev</div></div>
-      <div class="stat"><div class="lbl">Occupancy</div><div class="val">87%</div><div class="trend">+4pt</div></div>
-      <div class="stat"><div class="lbl">ADR</div><div class="val">$1,120</div><div class="trend">+$68</div></div>
-      <div class="stat"><div class="lbl">Bookings today</div><div class="val">42</div><div class="trend">+9</div></div>
+<section class="hero">
+  <div class="hero-bg"><img src="assets/img/hero.jpg" alt="" /></div>
+  <div class="container hero-inner">
+    <div class="fade-up">
+      <div class="eyebrow">Bộ sưu tập Aurence</div>
+      <h1 class="mt-1">Trải nghiệm lưu trú độc bản, <em>thiết kế tinh tế</em>.</h1>
+      <p>Một bộ sưu tập tư nhân gồm những khách sạn danh giá bậc nhất thế giới — được đặt trước, mở khóa và ghi nhớ thông qua một giao diện duy nhất.</p>
     </div>
-
-    <div class="grid grid-2 mt-4">
-      <div class="card" style="padding:1.5rem">
-        <h3>Revenue trend</h3>
-        <div class="line-chart mt-2">
-          <svg viewBox="0 0 400 200" preserveAspectRatio="none">
-            <path d="M0,160 L50,140 L100,150 L150,110 L200,95 L250,70 L300,80 L350,40 L400,55" fill="none" stroke="var(--gold)" stroke-width="3" />
-            <path d="M0,160 L50,140 L100,150 L150,110 L200,95 L250,70 L300,80 L350,40 L400,55 L400,200 L0,200 Z" fill="var(--gold)" opacity="0.12" />
-          </svg>
-        </div>
-        <div class="flex justify-between muted mt-2" style="font-size:0.75rem"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span></div>
+    <form class="search-bar fade-up d1" id="searchForm">
+      <div class="search-field">
+        <label>◉ Điểm đến</label>
+        <input name="q" id="q_dest" placeholder="Đà Nẵng, Phú Quốc, Nha Trang..." required />
       </div>
-      <div class="card" style="padding:1.5rem">
-        <h3>Occupancy by property</h3>
-        <div class="bar-chart mt-3" id="bars"></div>
+      <div class="search-field">
+        <label>▤ Nhận phòng</label>
+        <input type="date" name="in" id="q_in" required />
+      </div>
+      <div class="search-field">
+        <label>▤ Trả phòng</label>
+        <input type="date" name="out" id="q_out" required />
+      </div>
+      <div class="search-field">
+        <label>◈ Số khách</label>
+        <input type="number" min="1" max="10" name="g" id="q_guests" placeholder="Số khách..." required />
+      </div>
+      <button class="btn btn-primary btn-lg" type="submit">Tìm kiếm</button>
+    </form>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head">
+    <div><div class="eyebrow">Đặc sắc</div><h2>Khách sạn của mùa</h2></div>
+    <a href="hotels.html" class="btn btn-ghost">Xem tất cả →</a>
+  </div>
+  <div class="grid grid-3 mt-3" id="featured"></div>
+</section>
+
+<section class="section" style="background: rgba(0,0,0,0.02)">
+  <div class="container">
+    <div class="section-head"><div><div class="eyebrow">Hành trình tiếp theo</div><h2>Điểm đến phổ biến</h2></div></div>
+    <div class="grid grid-4 mt-3" id="destinations"></div>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="offer">
+    <div class="offer-grid">
+      <div>
+        <div class="eyebrow">Ưu đãi đặc quyền</div>
+        <h2 style="color:#fff;margin-top:1rem">Kỳ nghỉ thượng lưu tại biển đảo, nâng tầm trải nghiệm.</h2>
+        <p style="color:rgba(255,255,255,0.75);margin-top:1rem">Miễn phí đưa đón sân bay bằng xe hạng sang, dịch vụ đầu bếp phục vụ riêng tại phòng và tặng thêm đêm nghỉ thứ 4 cho kỳ lưu trú của bạn - áp dụng đến hết tháng 9.</p>
+        <a href="hotels.html" class="btn btn-primary btn-lg" style="margin-top:1.5rem">Đặt trước gói ưu đãi</a>
+      </div>
+      <div class="offer-feats">
+        <div class="offer-feat"><div class="icon">✦</div><span>Trợ lý riêng biệt hiệu</span></div>
+        <div class="offer-feat"><div class="icon">✧</div><span>Ẩm thực Michelin</span></div>
+        <div class="offer-feat"><div class="icon">✦</div><span>Đầu bếp tại phòng</span></div>
+        <div class="offer-feat"><div class="icon">✧</div><span>Đưa đón hạng sang</span></div>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="section-head mt-4"><h2>Latest bookings</h2><a class="btn btn-outline btn-sm" href="bookings.html">View all →</a></div>
-    <div class="table-wrap mt-2">
-      <table class="data"><thead><tr><th>ID</th><th>Customer</th><th>Hotel</th><th>Dates</th><th>Total</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table>
-    </div>
-  </main>
-</div>
-<script src="../assets/js/data.js"></script>
-<script src="../assets/js/admin.js"></script>
+<section class="section container">
+  <div class="section-head"><div><div class="eyebrow">Chia sẻ từ khách hàng</div><h2>Trải nghiệm tuyệt hảo</h2></div></div>
+  <div class="grid grid-3 mt-3" id="reviews"></div>
+</section>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
 <script>
-  const { bookings, hotels, LS } = AURENCE;
-  const rows = LS.get("aurence.bookings", bookings);
-  document.getElementById("tb").innerHTML = rows.slice(0,6).map(b => `
-    <tr><td>${b.id}</td><td>${b.customer}</td><td>${b.hotel}</td><td>${b.checkIn} → ${b.checkOut}</td><td>$${b.total.toLocaleString()}</td><td><span class="status ${b.status.toLowerCase()}">${b.status}</span></td></tr>`).join("");
-  const occ = [82,91,76,88,94,79];
-  const names = hotels.slice(0,6).map(h => h.name.split(" ")[0]);
-  document.getElementById("bars").innerHTML = occ.map((v,i) => `<div class="bar" style="height:${v*2}px"><b>${v}%</b><span>${names[i]}</span></div>`).join("");
+  const { hotels, destinations, reviews, LS } = AURENCE;
+  
+  // Render featured hotels
+  const featuredContainer = document.getElementById("featured");
+  if (featuredContainer) {
+    featuredContainer.innerHTML = hotels.slice(0, 6).map(renderHotelCard).join("");
+  }
+  
+  // Render popular destinations
+  const destinationsContainer = document.getElementById("destinations");
+  if (destinationsContainer) {
+    destinationsContainer.innerHTML = destinations.map(d => `
+      <a class="tile fade-up" href="hotels.html?q=${encodeURIComponent(d.name)}">
+        <img src="${d.image}" alt="${d.name}" loading="lazy" />
+        <div class="tile-label"><b>${d.name}</b><span>${d.count} khách sạn</span></div>
+      </a>`).join("");
+  }
+  
+  // Render reviews
+  const reviewsContainer = document.getElementById("reviews");
+  if (reviewsContainer) {
+    reviewsContainer.innerHTML = reviews.map(r => `
+      <div class="testimonial fade-up">
+        <div class="q">"</div>
+        <p>${r.text}</p>
+        <div class="muted" style="font-size:0.8rem;margin-top:1rem"><b style="color:var(--text)">${r.author}</b> · ${r.date}</div>
+      </div>`).join("");
+  }
+
+  // Handle search form submission
+  const searchForm = document.getElementById("searchForm");
+  if (searchForm) {
+    // Set min date of check-in to today
+    const todayStr = new Date().toISOString().split("T")[0];
+    document.getElementById("q_in").min = todayStr;
+    document.getElementById("q_out").min = todayStr;
+
+    searchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const destination = document.getElementById("q_dest").value.trim();
+      const checkIn = document.getElementById("q_in").value;
+      const checkOut = document.getElementById("q_out").value;
+      const guests = parseInt(document.getElementById("q_guests").value) || 2;
+
+      // Validation
+      if (!destination) {
+        toast("Vui lòng nhập điểm đến.");
+        return;
+      }
+      if (!checkIn) {
+        toast("Vui lòng chọn ngày nhận phòng.");
+        return;
+      }
+      if (!checkOut) {
+        toast("Vui lòng chọn ngày trả phòng.");
+        return;
+      }
+      if (new Date(checkOut) <= new Date(checkIn)) {
+        toast("Ngày trả phòng phải sau ngày nhận phòng.");
+        return;
+      }
+      if (guests < 1) {
+        toast("Số lượng khách phải lớn hơn hoặc bằng 1.");
+        return;
+      }
+
+      // Save search data
+      LS.set("aurence.search", { destination, checkIn, checkOut, guests });
+      
+      // Redirect to listing page
+      location.href = "hotels.html";
+    });
+  }
 </script>
 </body>
 </html>

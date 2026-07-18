@@ -1,46 +1,290 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Checkout & invoice — Aurence</title>
+<title>Thủ tục Trả phòng & Hóa đơn — Aurence</title>
 <link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .checkout-card { background: #fff; border-radius: 20px; padding: 2.5rem; border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
+  .invoice-title { font-family: var(--font-display); font-size: 2rem; color: var(--navy); text-align: center; text-transform: uppercase; letter-spacing: 0.1em; }
+  .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid var(--navy); padding-bottom: 1.5rem; margin-top: 1.5rem; }
+  .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; font-size: 0.9rem; }
+  
+  /* Print styling */
+  @media print {
+    body { background: #fff; color: #000; }
+    .nav, .footer, .btn, .concierge, .eyebrow, p.muted, .checkout-confirm-section { display: none !important; }
+    main { padding-top: 0 !important; }
+    .checkout-card { border: none; box-shadow: none; padding: 0; }
+    .invoice-title { margin-top: 0; }
+  }
+</style>
 </head>
 <body data-page="dashboard">
 <div data-nav></div>
 
-<main class="container" style="padding-top:7rem;max-width:820px">
-  <div class="eyebrow">Departure</div>
-  <h1 class="mt-1">Checkout & folio</h1>
-  <p class="muted mt-1">Review your final invoice. Departure by 12:00 pm.</p>
+<main class="container" style="padding-top:7rem; max-width:850px; min-height:80vh;" id="root">
+  <div class="eyebrow" id="checkout-eyebrow">Thủ tục trả phòng</div>
+  <h1 class="mt-1" id="checkout-title">Thanh toán & Folio hóa đơn</h1>
+  <p class="muted mt-1" id="checkout-desc">Vui lòng kiểm tra lại toàn bộ chi tiết giao dịch trước khi hoàn tất thủ tục trả phòng. Giờ trả phòng tiêu chuẩn trước 12:00 trưa.</p>
 
-  <div class="card mt-3" style="padding:2rem">
-    <div class="section-head">
-      <div><b style="font-family:var(--font-display);font-size:1.4rem">Aman Azure Maldives</b><div class="muted mt-1">Overwater Villa · BK-8291</div></div>
-      <div class="text-right"><div class="muted" style="font-size:0.85rem">Aug 12 — Aug 15, 2026</div><div>3 nights · 2 guests</div></div>
-    </div>
-    <table class="data mt-3">
-      <thead><tr><th>Item</th><th>Date</th><th class="text-right" style="text-align:right">Amount</th></tr></thead>
-      <tbody>
-        <tr><td>Overwater Villa — 3 nights</td><td>Aug 12–15</td><td style="text-align:right">$3,750.00</td></tr>
-        <tr><td>Seaplane transfer</td><td>Aug 12</td><td style="text-align:right">$680.00</td></tr>
-        <tr><td>Kaiseki dinner (2 guests)</td><td>Aug 13</td><td style="text-align:right">$420.00</td></tr>
-        <tr><td>Spa — Signature couple ritual</td><td>Aug 14</td><td style="text-align:right">$580.00</td></tr>
-        <tr><td>Minibar</td><td>Aug 12–14</td><td style="text-align:right">$85.00</td></tr>
-        <tr><td>Taxes & service (12%)</td><td></td><td style="text-align:right">$661.80</td></tr>
-      </tbody>
-    </table>
-    <div class="flex justify-between mt-3" style="border-top:1px solid var(--border);padding-top:1rem"><b>Total</b><b style="font-family:var(--font-display);font-size:1.6rem">$6,176.80</b></div>
-    <div class="muted mt-2" style="font-size:0.85rem">Charged to Visa ending 4242</div>
-    <div class="flex gap-2 mt-3">
-      <button class="btn btn-outline" onclick="window.print()">Download PDF</button>
-      <a href="review.html" class="btn btn-primary">Leave a review</a>
-    </div>
+  <div class="checkout-card mt-4" id="checkout-panel">
+    <!-- Folio layout will be injected here -->
   </div>
 </main>
 
 <div data-footer></div>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/app.js"></script>
+<script>
+  const { LS } = AURENCE;
+  
+  let bookingsList = [];
+  let currentBooking = null;
+  let viewInvoiceMode = false;
+
+  const urlParams = new URLSearchParams(location.search);
+  const bookingId = urlParams.get("bookingId");
+  const viewInvoiceParam = urlParams.get("viewInvoice") === "true";
+
+  function init() {
+    bookingsList = LS.get("aurence.bookings", AURENCE.bookings);
+    
+    if (!bookingId) {
+      document.getElementById("checkout-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Không xác định được mã đặt phòng</h3>
+          <p class="muted mt-2">Vui lòng quay lại trang Tổng quan đặt phòng để chọn đơn hàng thực hiện thủ tục trả phòng.</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Về trang đặt phòng</a>
+        </div>
+      `;
+      return;
+    }
+
+    currentBooking = bookingsList.find(b => b.id.toUpperCase() === bookingId.toUpperCase());
+
+    if (!currentBooking) {
+      document.getElementById("checkout-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Không tìm thấy mã đặt phòng</h3>
+          <p class="muted mt-2">Mã đặt phòng <b>${bookingId}</b> không tồn tại trong hệ thống.</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Quay lại danh sách</a>
+        </div>
+      `;
+      return;
+    }
+
+    // Determine mode
+    if (currentBooking.status === "Đã trả phòng" || viewInvoiceParam) {
+      viewInvoiceMode = true;
+    }
+
+    if (currentBooking.status !== "Đã nhận phòng" && !viewInvoiceMode) {
+      document.getElementById("checkout-panel").innerHTML = `
+        <div style="text-align:center; padding:2rem 0">
+          <h3 class="text-gold">Không thể làm thủ tục trả phòng</h3>
+          <p class="muted mt-2">Đơn đặt phòng này hiện ở trạng thái <b>"${currentBooking.status}"</b>. Thủ tục trả phòng chỉ dành cho các đơn đang lưu trú (Đã nhận phòng).</p>
+          <a href="dashboard.html" class="btn btn-navy mt-3">Về trang đặt phòng</a>
+        </div>
+      `;
+      return;
+    }
+
+    renderFolio();
+  }
+
+  function renderFolio() {
+    const settings = LS.get("aurence.settings", { taxRate: 10, serviceFeeRate: 5 });
+    
+    // Calculate values
+    const d1 = new Date(currentBooking.checkIn);
+    const d2 = new Date(currentBooking.checkOut);
+    const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) || 1;
+    
+    const roomCharge = currentBooking.price * nights;
+    
+    const servicesOrdered = currentBooking.services || [];
+    let servicesCharge = 0;
+    
+    let servicesHTML = "";
+    servicesOrdered.forEach(s => {
+      const cost = s.price * s.quantity;
+      servicesCharge += cost;
+      servicesHTML += `
+        <tr>
+          <td>${s.name} (x${s.quantity})</td>
+          <td>${s.date ? new Date(s.date).toLocaleDateString("vi-VN") : "Hôm nay"}</td>
+          <td style="text-align:right">${window.formatVND(cost)}</td>
+        </tr>
+      `;
+    });
+
+    const subtotal = roomCharge + servicesCharge;
+    const serviceFee = Math.round(subtotal * (settings.serviceFeeRate / 100));
+    const tax = Math.round(subtotal * (settings.taxRate / 100));
+    
+    // Verify booking total matches calculated total
+    const computedTotal = subtotal + serviceFee + tax;
+    
+    // Update booking total just to keep data synchronized
+    if (!viewInvoiceMode && currentBooking.total !== computedTotal) {
+      currentBooking.total = computedTotal;
+      const idx = bookingsList.findIndex(b => b.id === currentBooking.id);
+      if (idx > -1) {
+        bookingsList[idx] = currentBooking;
+        LS.set("aurence.bookings", bookingsList);
+      }
+    }
+
+    // Set Vietnamese titles for invoice mode vs checkout mode
+    if (viewInvoiceMode) {
+      document.getElementById("checkout-eyebrow").textContent = "Hóa đơn thanh toán";
+      document.getElementById("checkout-title").textContent = "HÓA ĐƠN GIÁ TRỊ GIA TĂNG";
+      document.getElementById("checkout-desc").textContent = "Hóa đơn chính thức xác nhận thanh toán kỳ lưu trú tại Aurence Collection.";
+    }
+
+    const panel = document.getElementById("checkout-panel");
+    
+    panel.innerHTML = `
+      ${viewInvoiceMode ? `
+        <div class="invoice-title">Hóa đơn thanh toán</div>
+        <div style="text-align:center; font-size:0.9rem; margin-top:0.25rem;" class="muted">
+          Số hóa đơn: <b style="color:var(--navy);">${currentBooking.invoiceNo || 'INV-TEMP'}</b> · Ngày phát hành: ${new Date().toLocaleDateString("vi-VN")}
+        </div>
+      ` : ''}
+
+      <div class="invoice-header">
+        <div>
+          <b style="font-family:var(--font-display);font-size:1.4rem; color:var(--navy);">${currentBooking.hotel}</b>
+          <div class="muted mt-1" style="font-size:0.85rem">◉ Địa điểm: ${currentBooking.hotel.includes("Đà Nẵng") ? "Ngũ Hành Sơn, Đà Nẵng" : currentBooking.hotel.includes("Nha Trang") ? "Trần Phú, Nha Trang" : currentBooking.hotel.includes("Hạ Long") ? "Vịnh Hạ Long, Quảng Ninh" : currentBooking.hotel.includes("Đà Lạt") ? "Hồ Xuân Hương, Đà Lạt" : currentBooking.hotel.includes("Phú Quốc") ? "Bãi Dài, Phú Quốc" : "Phố cổ Hội An"}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted" style="font-size:0.85rem">Mã đặt phòng: <code style="color:var(--gold); font-weight:600; font-size:1rem;">${currentBooking.id}</code></div>
+          <div style="font-size:0.85rem;" class="muted">Phòng số: <b>${currentBooking.roomNumber || '...'}</b></div>
+        </div>
+      </div>
+
+      <div class="invoice-details">
+        <div>
+          <b>Khách hàng thanh toán:</b><br/>
+          Họ tên: <b>${currentBooking.customer}</b><br/>
+          Số điện thoại: ${currentBooking.phone}<br/>
+          Email: ${currentBooking.email}<br/>
+          CMND/CCCD/Hộ chiếu: ${currentBooking.idCard}
+        </div>
+        <div style="text-align:right;">
+          <b>Thông tin lưu trú:</b><br/>
+          Loại phòng: <b>${currentBooking.room}</b><br/>
+          Thời gian: ${new Date(currentBooking.checkIn).toLocaleDateString("vi-VN")} → ${new Date(currentBooking.checkOut).toLocaleDateString("vi-VN")}<br/>
+          Số đêm lưu trú: ${nights} đêm · Số khách: ${currentBooking.guests} khách
+        </div>
+      </div>
+
+      <table class="data mt-3">
+        <thead>
+          <tr>
+            <th>Nội dung thanh toán</th>
+            <th>Thời gian</th>
+            <th style="text-align:right">Thành tiền (VND)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tiền phòng (${currentBooking.room} - ${nights} đêm)</td>
+            <td>${new Date(currentBooking.checkIn).toLocaleDateString("vi-VN")} – ${new Date(currentBooking.checkOut).toLocaleDateString("vi-VN")}</td>
+            <td style="text-align:right">${window.formatVND(roomCharge)}</td>
+          </tr>
+          ${servicesHTML}
+          <tr style="border-top: 2px solid var(--border)">
+            <td colspan="2" style="font-weight:600; text-align:right;">Phí dịch vụ (${settings.serviceFeeRate}%)</td>
+            <td style="text-align:right; font-weight:600;">${window.formatVND(serviceFee)}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="font-weight:600; text-align:right;">Thuế GTGT (${settings.taxRate}%)</td>
+            <td style="text-align:right; font-weight:600;">${window.formatVND(tax)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="flex justify-between mt-3" style="border-top:2px solid var(--navy);padding-top:1.25rem">
+        <b style="font-size:1.15rem;">Tổng hóa đơn (Đã bao gồm thuế & phí)</b>
+        <b style="font-family:var(--font-display);font-size:1.75rem; color:var(--navy);">${window.formatVND(currentBooking.total)}</b>
+      </div>
+      
+      <div class="muted mt-2" style="font-size:0.85rem; text-align:right;">
+        Phương thức thanh toán: <b>${currentBooking.paymentMethod || 'Thẻ tín dụng'}</b> · Trạng thái: <span class="status confirmed">ĐÃ THANH TOÁN</span>
+      </div>
+
+      ${!viewInvoiceMode ? `
+        <div class="checkout-confirm-section mt-4" style="background:var(--bg); border:1px solid var(--border); border-radius:14px; padding:1.5rem;">
+          <h4 style="margin:0 0 0.5rem; text-transform:uppercase;">Xác nhận hoàn tất thủ tục</h4>
+          <label class="check-row" style="font-weight:600; display:flex; align-items:flex-start; margin-bottom:0.5rem;">
+            <input type="checkbox" id="chk-keys" style="margin-top: 0.25rem;" /> <span>Tôi xác nhận đã trả đầy đủ chìa khóa phòng và bàn giao lại phòng lưu trú nguyên vẹn.</span>
+          </label>
+          <label class="check-row" style="font-weight:600; display:flex; align-items:flex-start;">
+            <input type="checkbox" id="chk-folio" style="margin-top: 0.25rem;" /> <span>Tôi xác nhận đồng ý với toàn bộ chi tiết và chi phí dịch vụ liệt kê trên hóa đơn.</span>
+          </label>
+          <button class="btn btn-primary btn-block btn-lg mt-3" id="confirm-checkout-btn">Xác nhận Trả phòng & Phát hành hóa đơn</button>
+        </div>
+      ` : `
+        <div class="flex gap-2 mt-4 justify-end">
+          <button class="btn btn-outline" onclick="window.print()">In hóa đơn</button>
+          <a href="review.html?bookingId=${currentBooking.id}" class="btn btn-primary">Viết đánh giá trải nghiệm</a>
+        </div>
+      `}
+    `;
+
+    // Bind event for checkout confirmation
+    if (!viewInvoiceMode) {
+      document.getElementById("confirm-checkout-btn").addEventListener("click", () => {
+        const keysCheck = document.getElementById("chk-keys").checked;
+        const folioCheck = document.getElementById("chk-folio").checked;
+        
+        if (!keysCheck || !folioCheck) {
+          toast("Vui lòng tích xác nhận cả hai điều khoản trước khi trả phòng.");
+          return;
+        }
+
+        if (!confirm("Bạn có chắc chắn muốn xác nhận thủ tục trả phòng?")) return;
+
+        // Process checkout
+        currentBooking.status = "Đã trả phòng";
+        
+        // Generate invoice number
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, "0") + now.getDate().toString().padStart(2, "0");
+        const randCode = Math.floor(1000 + Math.random() * 9000);
+        currentBooking.invoiceNo = `INV${dateStr}${randCode}`;
+        currentBooking.checkoutConfirmed = true;
+
+        // Save to database
+        const idx = bookingsList.findIndex(b => b.id === currentBooking.id);
+        if (idx > -1) {
+          bookingsList[idx] = currentBooking;
+          LS.set("aurence.bookings", bookingsList);
+        }
+
+        // Update room status in database to "Đang dọn dẹp" (Cleaning)
+        const roomsList = LS.get("aurence.rooms", AURENCE.rooms);
+        const hotelObj = AURENCE.hotels.find(h => h.name === currentBooking.hotel);
+        if (hotelObj) {
+          const roomObj = roomsList.find(r => r.hotelId === hotelObj.id && r.name === currentBooking.room);
+          if (roomObj) {
+            roomObj.status = "Đang dọn dẹp";
+            LS.set("aurence.rooms", roomsList);
+          }
+        }
+
+        toast("Đã hoàn tất thủ tục trả phòng thành công!");
+        viewInvoiceMode = true;
+        renderFolio();
+      });
+    }
+  }
+
+  // Initial trigger
+  init();
+</script>
 </body>
 </html>

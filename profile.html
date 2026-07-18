@@ -1,51 +1,107 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Profile — Aurence</title>
+<title>Hồ sơ cá nhân — Aurence</title>
 <link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .fav-hotel-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+  }
+  .fav-hotel-item:last-child { border-bottom: none; }
+</style>
 </head>
 <body data-page="dashboard">
 <div data-nav></div>
 
-<main class="container" style="padding-top:7rem">
-  <div class="eyebrow">Account</div>
-  <h1 class="mt-1">Profile & preferences</h1>
+<main class="container" style="padding-top:7rem; min-height:80vh;">
+  <div class="eyebrow">Tài khoản</div>
+  <h1 class="mt-1">Hồ sơ & Sở thích cá nhân</h1>
 
   <div class="detail-layout mt-3">
     <div>
+      <!-- Personal Info Card -->
       <div class="card" style="padding:2rem">
-        <h3>Personal information</h3>
-        <form id="profile-form" class="grid grid-2 mt-2">
-          <div class="field"><label>First name</label><input class="input" name="firstName" /></div>
-          <div class="field"><label>Last name</label><input class="input" name="lastName" /></div>
-          <div class="field"><label>Email</label><input class="input" name="email" type="email" /></div>
-          <div class="field"><label>Phone</label><input class="input" name="phone" /></div>
-          <div style="grid-column:span 2" class="flex gap-2"><button class="btn btn-primary" type="submit">Save changes</button></div>
+        <h3>Thông tin cá nhân</h3>
+        <form id="profile-form">
+          <div class="grid grid-2 mt-2">
+            <div class="field"><label>Họ</label><input class="input" name="lastName" id="p-last" required /></div>
+            <div class="field"><label>Tên đệm & Tên</label><input class="input" name="firstName" id="p-first" required /></div>
+            <div class="field"><label>Địa chỉ Email</label><input class="input" name="email" type="email" id="p-email" required /></div>
+            <div class="field"><label>Số điện thoại</label><input class="input" name="phone" id="p-phone" required /></div>
+            <div class="field"><label>Số CMND/CCCD/Hộ chiếu</label><input class="input" name="idCard" id="p-idcard" placeholder="Nhập số giấy tờ..." required /></div>
+            <div class="field"><label>Ngày sinh</label><input class="input" type="date" name="dob" id="p-dob" required /></div>
+            <div class="field" style="grid-column: span 2;"><label>Địa chỉ thường trú</label><input class="input" name="address" id="p-address" placeholder="Số nhà, tên đường, tỉnh/thành phố..." /></div>
+          </div>
+          <button class="btn btn-primary mt-3" type="submit">Lưu thông tin cá nhân</button>
         </form>
       </div>
 
+      <!-- Travel Preferences Card -->
       <div class="card mt-3" style="padding:2rem">
-        <h3>Travel preferences</h3>
+        <h3>Sở thích chuyến đi</h3>
+        <p class="muted mt-1" style="font-size:0.85rem">Các thiết lập mặc định sẽ tự động chuẩn bị trước cho tất cả các phòng bạn đặt.</p>
         <div class="grid grid-3 mt-2">
-          <div class="field"><label>Preferred bed</label>
-            <select class="select" id="p-bed"><option>King</option><option>Twin</option><option>Queen</option></select></div>
-          <div class="field"><label>Pillow</label>
-            <select class="select" id="p-pillow"><option>Down</option><option>Memory foam</option><option>Firm</option></select></div>
-          <div class="field"><label>Newspaper</label>
-            <select class="select" id="p-news"><option>FT</option><option>NYT</option><option>None</option></select></div>
+          <div class="field"><label>Loại giường ưa thích</label>
+            <select class="select" id="p-bed">
+              <option value="King">Giường King (Lớn)</option>
+              <option value="Queen">Giường Queen</option>
+              <option value="Twin">Giường Đôi (2 giường)</option>
+            </select>
+          </div>
+          <div class="field"><label>Loại gối ngủ</label>
+            <select class="select" id="p-pillow">
+              <option value="Down">Gối lông vũ (Mềm)</option>
+              <option value="Memory foam">Gối cao su non</option>
+              <option value="Firm">Gối bông cứng</option>
+            </select>
+          </div>
+          <div class="field"><label>Thời báo buổi sáng</label>
+            <select class="select" id="p-news">
+              <option value="FT">Thời báo Tài chính (FT)</option>
+              <option value="NYT">Thời báo New York (NYT)</option>
+              <option value="None">Không đọc báo</option>
+            </select>
+          </div>
         </div>
-        <button class="btn btn-navy mt-3" id="save-prefs">Save preferences</button>
+        <button class="btn btn-navy mt-3" id="save-prefs">Lưu sở thích</button>
+      </div>
+
+      <!-- Password Change Demo Card -->
+      <div class="card mt-3" style="padding:2rem">
+        <h3>Đổi mật khẩu tài khoản</h3>
+        <form id="password-form">
+          <div class="grid grid-3 mt-2">
+            <div class="field"><label>Mật khẩu hiện tại</label><input class="input" type="password" id="pass-old" placeholder="••••••••" required /></div>
+            <div class="field"><label>Mật khẩu mới</label><input class="input" type="password" id="pass-new" placeholder="Nhập mật khẩu mới..." required /></div>
+            <div class="field"><label>Xác nhận mật khẩu</label><input class="input" type="password" id="pass-confirm" placeholder="Nhập lại mật khẩu mới..." required /></div>
+          </div>
+          <button class="btn btn-outline mt-3" type="submit">Cập nhật mật khẩu</button>
+        </form>
       </div>
     </div>
+    
     <aside>
+      <!-- Profile Card Summary -->
       <div class="card" style="padding:2rem;text-align:center">
-        <div style="width:88px;height:88px;border-radius:50%;background:var(--gold-soft);color:var(--navy);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;margin:0 auto">A</div>
-        <div style="font-family:var(--font-display);font-size:1.4rem;margin-top:1rem" id="pname"></div>
-        <div class="muted" id="pemail"></div>
-        <div class="chip mt-2" style="background:var(--gold-soft);border-color:var(--gold);color:var(--navy)">✦ Platinum member</div>
-        <div class="mt-3 muted" style="font-size:0.85rem">Member since 2021<br />42,580 loyalty points</div>
+        <div style="width:88px;height:88px;border-radius:50%;background:var(--gold-soft);color:var(--navy);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;margin:0 auto" id="avatar-letters">T</div>
+        <div style="font-family:var(--font-display);font-size:1.4rem;margin-top:1rem" id="pname">Nguyễn Anh Tuấn</div>
+        <div class="muted" id="pemail" style="font-size:0.9rem;">tuan.nguyen@example.com</div>
+        <div class="chip mt-2" style="background:var(--gold-soft);border-color:var(--gold);color:var(--navy)" id="p-side-tier">✦ Hội viên Platinum</div>
+        <div class="mt-3 muted" style="font-size:0.85rem">
+          Thành viên từ: <b>2021</b><br />
+          Điểm tích lũy: <b id="side-points">42,580</b>
+        </div>
+      </div>
+      
+      <!-- Favorite Hotels List Card -->
+      <div class="card mt-3" style="padding:1.5rem">
+        <h3>Khách sạn yêu thích</h3>
+        <div id="favorites-list" class="mt-2">
+          <div class="muted">Chưa yêu thích khách sạn nào.</div>
+        </div>
       </div>
     </aside>
   </div>
@@ -56,27 +112,138 @@
 <script src="assets/js/app.js"></script>
 <script>
   const { LS } = AURENCE;
-  const p = LS.get("aurence.profile");
-  const form = document.getElementById("profile-form");
-  ["firstName","lastName","email","phone"].forEach(k => form[k].value = p[k] || "");
-  ["bed","pillow","news"].forEach(k => { const map = {bed:"bed",pillow:"pillow",news:"newspaper"}; const el = document.getElementById("p-"+k); el.value = p.preferences[map[k]]; });
-  document.getElementById("pname").textContent = p.firstName + " " + p.lastName;
-  document.getElementById("pemail").textContent = p.email;
-  form.addEventListener("submit", (e) => {
+  
+  let p = null;
+  let hotelsList = [];
+  
+  function initPage() {
+    p = LS.get("aurence.profile", AURENCE.profile);
+    hotelsList = LS.get("aurence.hotels", AURENCE.hotels);
+
+    // Pre-fill forms
+    document.getElementById("p-last").value = p.lastName || "";
+    document.getElementById("p-first").value = p.firstName || "";
+    document.getElementById("p-email").value = p.email || "";
+    document.getElementById("p-phone").value = p.phone || "";
+    document.getElementById("p-idcard").value = p.idCard || "";
+    document.getElementById("p-dob").value = p.dob || "";
+    document.getElementById("p-address").value = p.address || "";
+
+    // Preferences select values
+    if (p.preferences) {
+      document.getElementById("p-bed").value = p.preferences.bed || "King";
+      document.getElementById("p-pillow").value = p.preferences.pillow || "Down";
+      document.getElementById("p-news").value = p.preferences.newspaper || "FT";
+    }
+
+    updateSideSummary();
+    renderFavorites();
+  }
+
+  function updateSideSummary() {
+    const fullName = (p.lastName || "") + " " + (p.firstName || "");
+    document.getElementById("pname").textContent = fullName;
+    document.getElementById("pemail").textContent = p.email || "";
+    document.getElementById("p-side-tier").textContent = `✦ Hội viên ${p.tier || 'Silver'}`;
+    
+    // Set avatar letters
+    if (p.firstName) {
+      document.getElementById("avatar-letters").textContent = p.firstName.charAt(0).toUpperCase();
+    }
+
+    // Calculate loyalty points dynamically based on bookings
+    const bookings = LS.get("aurence.bookings", AURENCE.bookings);
+    let totalSpent = 0;
+    bookings.forEach(b => {
+      if (b.status === "Đã trả phòng") totalSpent += b.total;
+    });
+    const points = Math.round(totalSpent / 2000);
+    document.getElementById("side-points").textContent = points.toLocaleString("vi-VN") + " điểm";
+  }
+
+  function renderFavorites() {
+    const container = document.getElementById("favorites-list");
+    const favs = p.favorites || [];
+
+    if (favs.length === 0) {
+      container.innerHTML = `<div class="muted" style="font-size:0.85rem; padding:0.5rem 0;">Chưa yêu thích khách sạn nào.</div>`;
+      return;
+    }
+
+    container.innerHTML = favs.map(hotelId => {
+      const h = hotelsList.find(x => x.id === hotelId);
+      if (!h) return "";
+      return `
+        <div class="fav-hotel-item">
+          <div>
+            <a href="hotel.html?id=${h.id}" style="font-weight:600; color:var(--navy); font-size:0.9rem;">${h.name}</a>
+            <div class="muted" style="font-size:0.75rem;">◉ ${h.location}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger); padding:0.25rem;" onclick="removeFavorite('${h.id}')" title="Xóa">✕</button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  window.removeFavorite = function(hotelId) {
+    if (!p.favorites) return;
+    const index = p.favorites.indexOf(hotelId);
+    if (index > -1) {
+      p.favorites.splice(index, 1);
+      LS.set("aurence.profile", p);
+      toast("Đã xóa khỏi danh sách yêu thích");
+      renderFavorites();
+    }
+  };
+
+  // Submit Profile Info Form
+  document.getElementById("profile-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const fd = new FormData(form);
-    const np = { ...p, firstName: fd.get("firstName"), lastName: fd.get("lastName"), email: fd.get("email"), phone: fd.get("phone") };
-    LS.set("aurence.profile", np);
-    toast("Profile updated.");
-    document.getElementById("pname").textContent = np.firstName + " " + np.lastName;
-    document.getElementById("pemail").textContent = np.email;
+    
+    p.lastName = document.getElementById("p-last").value.trim();
+    p.firstName = document.getElementById("p-first").value.trim();
+    p.email = document.getElementById("p-email").value.trim();
+    p.phone = document.getElementById("p-phone").value.trim();
+    p.idCard = document.getElementById("p-idcard").value.trim();
+    p.dob = document.getElementById("p-dob").value;
+    p.address = document.getElementById("p-address").value.trim();
+
+    LS.set("aurence.profile", p);
+    toast("Đã lưu thông tin cá nhân thành công.");
+    updateSideSummary();
   });
+
+  // Save Preferences
   document.getElementById("save-prefs").addEventListener("click", () => {
-    const cur = LS.get("aurence.profile");
-    cur.preferences = { bed: document.getElementById("p-bed").value, pillow: document.getElementById("p-pillow").value, newspaper: document.getElementById("p-news").value };
-    LS.set("aurence.profile", cur);
-    toast("Preferences saved.");
+    p.preferences = {
+      bed: document.getElementById("p-bed").value,
+      pillow: document.getElementById("p-pillow").value,
+      newspaper: document.getElementById("p-news").value
+    };
+
+    LS.set("aurence.profile", p);
+    toast("Đã lưu sở thích chuyến đi thành công.");
   });
+
+  // Password Form submit handler (demo simulation)
+  document.getElementById("password-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    
+    const oldPass = document.getElementById("pass-old").value;
+    const newPass = document.getElementById("pass-new").value;
+    const confirmPass = document.getElementById("pass-confirm").value;
+
+    if (newPass !== confirmPass) {
+      toast("Xác nhận mật khẩu mới không trùng khớp!");
+      return;
+    }
+
+    toast("Đổi mật khẩu thành công (Mô phỏng).");
+    document.getElementById("password-form").reset();
+  });
+
+  // Initial trigger
+  initPage();
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Shared app JS — navbar, footer, page helpers
+// Shared app JS — navbar, footer, page helpers for Aurence
 (function () {
   const $ = (s, root = document) => root.querySelector(s);
   const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
@@ -13,14 +13,14 @@
         <div class="container nav-inner">
           <a href="index.html" class="brand">Aur<em>e</em>nce</a>
           <div class="nav-links" id="nav-links">
-            <a href="index.html" data-link="home">Stays</a>
-            <a href="hotels.html" data-link="hotels">Hotels</a>
-            <a href="services.html" data-link="services">Services</a>
-            <a href="dashboard.html" data-link="dashboard">My stays</a>
-            <a href="admin/index.html" data-link="admin">Admin</a>
+            <a href="index.html" data-link="home">Trang chủ</a>
+            <a href="hotels.html" data-link="hotels">Khách sạn</a>
+            <a href="services.html" data-link="services">Dịch vụ</a>
+            <a href="dashboard.html" data-link="dashboard">Đặt phòng của tôi</a>
+            <a href="admin/index.html" data-link="admin">Quản trị</a>
           </div>
           <div class="nav-actions">
-            <a href="profile.html" class="btn btn-sm btn-outline">Profile</a>
+            <a href="profile.html" class="btn btn-sm btn-outline">Hồ sơ</a>
             <button class="btn btn-sm btn-ghost nav-toggle" aria-label="Menu" id="nav-toggle">☰</button>
           </div>
         </div>
@@ -52,24 +52,24 @@
           <div class="footer-grid">
             <div>
               <div class="brand" style="color:#fff">Aur<em style="color:var(--gold);font-style:normal">e</em>nce</div>
-              <p style="margin-top:1rem;font-size:0.9rem;max-width:280px">A private collection of the world's most storied hotels — quietly reserved through a single interface.</p>
+              <p style="margin-top:1rem;font-size:0.9rem;max-width:280px">Một bộ sưu tập tư nhân gồm những khách sạn sang trọng huyền thoại trên thế giới - được đặt trước và trải nghiệm qua một giao diện tinh tế, yên bình.</p>
             </div>
             <div>
-              <h4>Company</h4>
-              <a href="#">About</a><a href="#">Journal</a><a href="#">Press</a><a href="#">Careers</a>
+              <h4>Về công ty</h4>
+              <a href="#">Giới thiệu</a><a href="#">Tạp chí</a><a href="#">Báo chí</a><a href="#">Tuyển dụng</a>
             </div>
             <div>
-              <h4>Guests</h4>
-              <a href="dashboard.html">My stays</a><a href="services.html">Concierge</a><a href="profile.html">Profile</a><a href="#">Contact</a>
+              <h4>Dành cho khách</h4>
+              <a href="dashboard.html">Đặt phòng của tôi</a><a href="services.html">Dịch vụ phòng</a><a href="profile.html">Hồ sơ cá nhân</a><a href="#">Liên hệ</a>
             </div>
             <div>
-              <h4>Legal</h4>
-              <a href="#">Terms</a><a href="#">Privacy</a><a href="#">Cookies</a>
+              <h4>Pháp lý</h4>
+              <a href="#">Điều khoản</a><a href="#">Bảo mật</a><a href="#">Cookies</a>
             </div>
           </div>
           <div class="footer-bottom">
-            <span>© ${new Date().getFullYear()} Aurence Collection</span>
-            <span>Crafted with restraint.</span>
+            <span>© ${new Date().getFullYear()} Bộ sưu tập Aurence</span>
+            <span>Thiết kế tinh tế & sang trọng.</span>
           </div>
         </div>
       </footer>`;
@@ -80,7 +80,7 @@
     const btn = document.createElement("a");
     btn.href = "services.html";
     btn.className = "concierge";
-    btn.innerHTML = "✦ Concierge";
+    btn.innerHTML = "✦ Dịch vụ phòng";
     document.body.appendChild(btn);
   }
 
@@ -96,7 +96,8 @@
 
   // Card renderer (reused across pages)
   window.renderHotelCard = function (h) {
-    const stars = "★".repeat(Math.round(h.rating));
+    const stars = "★".repeat(h.stars || Math.round(h.rating));
+    const priceFormatted = window.formatVND ? window.formatVND(h.price) : (h.price.toLocaleString() + " ₫");
     return `
       <a href="hotel.html?id=${h.id}" class="card fade-up">
         <div class="card-media">
@@ -106,11 +107,11 @@
         <div class="card-body">
           <div class="card-title">${h.name}</div>
           <div class="card-meta">◉ ${h.location}</div>
-          <div class="rating">${stars} <span class="muted" style="font-size:0.8rem">${h.rating} · ${h.reviews} reviews</span></div>
+          <div class="rating">${stars} <span class="muted" style="font-size:0.8rem">${h.rating} · ${h.reviews} đánh giá</span></div>
           <div class="card-facilities">${h.facilities.slice(0,4).map(f => `<span class="chip">${f}</span>`).join("")}</div>
           <div class="card-foot">
-            <span class="price">$${h.price}<small> / night</small></span>
-            <span class="btn btn-sm btn-outline">View</span>
+            <span class="price">${priceFormatted}<small> / đêm</small></span>
+            <span class="btn btn-sm btn-outline">Xem chi tiết</span>
           </div>
         </div>
       </a>`;
@@ -120,6 +121,7 @@
     injectNav();
     injectFooter();
     injectConcierge();
+    
     // reveal fade-up on load; also on scroll for below-fold
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.style.animationPlayState = "running"; io.unobserve(e.target); } });
