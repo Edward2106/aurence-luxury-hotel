@@ -122,6 +122,12 @@
   let rooms = [];
   let currentBase64Image = "";
 
+  function fixImgPath(path) {
+    if (!path) return "";
+    if (path.startsWith("data:") || path.startsWith("http") || path.startsWith("../")) return path;
+    return "../" + path;
+  }
+
   function loadHotels() {
     hotels = LS.get("aurence.hotels", AURENCE.hotels);
     rooms = LS.get("aurence.rooms", AURENCE.rooms);
@@ -150,7 +156,7 @@
         <tr>
           <td>
             <div style="display:flex;gap:0.75rem;align-items:center">
-              <img src="${h.image}" style="width:48px;height:48px;border-radius:8px;object-fit:cover" />
+              <img src="${fixImgPath(h.image)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover" />
               <b>${h.name}</b>
             </div>
           </td>
@@ -232,7 +238,7 @@
 
     // Image preview
     currentBase64Image = h.image;
-    imgPreview.src = h.image;
+    imgPreview.src = fixImgPath(h.image);
     imgPreview.style.display = "block";
 
     modal.classList.add("open");

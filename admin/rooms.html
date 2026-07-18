@@ -124,6 +124,12 @@
   let currentBase64Image = "";
   let activeStatusFilter = "all";
 
+  function fixImgPath(path) {
+    if (!path) return "";
+    if (path.startsWith("data:") || path.startsWith("http") || path.startsWith("../")) return path;
+    return "../" + path;
+  }
+
   function loadRoomsData() {
     rooms = LS.get("aurence.rooms", AURENCE.rooms);
     hotels = LS.get("aurence.hotels", AURENCE.hotels);
@@ -156,7 +162,7 @@
       return `
         <div class="card">
           <div class="card-media">
-            <img src="${r.image}" />
+            <img src="${fixImgPath(r.image)}" />
             <span class="card-badge">Phòng ${r.roomNumber}</span>
           </div>
           <div class="card-body">
@@ -254,7 +260,7 @@
 
     // Image preview
     currentBase64Image = r.image;
-    imgPreview.src = r.image;
+    imgPreview.src = fixImgPath(r.image);
     imgPreview.style.display = "block";
 
     modal.classList.add("open");

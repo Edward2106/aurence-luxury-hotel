@@ -1,9 +1,6 @@
 // Central mock data + localStorage helpers for Aurence
 (function () {
-  const isFirstLevel = location.pathname.includes("/admin/");
-  const BASE_PATH = isFirstLevel ? "../" : "";
-  const IMG = BASE_PATH + "assets/img/";
-  
+  const IMG = "assets/img/";
   const hotel1 = IMG + "hotel1.jpg";
   const hotel2 = IMG + "hotel2.jpg";
   const hotel3 = IMG + "hotel3.jpg";
