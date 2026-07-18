@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Online check-in — Aurence</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="dashboard">
+<div data-nav></div>
+
+<main class="container" style="padding-top:7rem">
+  <div class="eyebrow">Arrival</div>
+  <h1 class="mt-1">Online check-in</h1>
+  <p class="muted mt-1">Skip the front desk. Your digital key will unlock at 3:00 pm local time.</p>
+
+  <div class="stepper mt-3" id="stepper">
+    <div class="step active" data-s="1"><b>1. Verify</b><span>Passport & guests</span></div>
+    <div class="step" data-s="2"><b>2. Preferences</b><span>Room setup</span></div>
+    <div class="step" data-s="3"><b>3. Payment on file</b><span>Incidentals</span></div>
+    <div class="step" data-s="4"><b>4. Digital key</b><span>Ready</span></div>
+  </div>
+
+  <div class="card mt-3" style="padding:2rem" id="panel"></div>
+</main>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  let step = 1;
+  const panels = {
+    1: `<h3>Verify identity</h3>
+        <p class="muted mt-1">Scan or upload the primary guest's passport.</p>
+        <div class="grid grid-2 mt-2">
+          <div class="field"><label>Full name</label><input class="input" value="Amelia Rowe" /></div>
+          <div class="field"><label>Passport number</label><input class="input" placeholder="A12345678" /></div>
+          <div class="field"><label>Nationality</label><input class="input" placeholder="United Kingdom" /></div>
+          <div class="field"><label>Date of birth</label><input class="input" type="date" /></div>
+        </div>
+        <div class="mt-3 chip" style="padding:1.5rem;display:block;text-align:center;border:2px dashed var(--border)">Drop passport scan here — or <b>browse</b></div>`,
+    2: `<h3>Room preferences</h3>
+        <div class="grid grid-2 mt-2">
+          <label class="check-row"><input type="checkbox" checked /> Extra pillows</label>
+          <label class="check-row"><input type="checkbox" checked /> Non-alcoholic mini-bar</label>
+          <label class="check-row"><input type="checkbox" /> Baby cot</label>
+          <label class="check-row"><input type="checkbox" checked /> Late turn-down service</label>
+          <label class="check-row"><input type="checkbox" /> Hypoallergenic linens</label>
+          <label class="check-row"><input type="checkbox" checked /> Balcony (if available)</label>
+        </div>
+        <div class="field mt-2"><label>Anticipated arrival time</label><input class="input" type="time" value="15:00" /></div>`,
+    3: `<h3>Payment on file</h3>
+        <p class="muted mt-1">For incidentals during your stay. Not charged now.</p>
+        <div class="grid grid-2 mt-2">
+          <div class="field" style="grid-column:span 2"><label>Card on file</label><input class="input" value="•••• •••• •••• 4242" disabled /></div>
+          <div class="field"><label>Expiry</label><input class="input" value="09/28" disabled /></div>
+          <div class="field"><label>Billing zip</label><input class="input" value="94102" /></div>
+        </div>`,
+    4: `<div class="text-center">
+          <div style="font-size:4rem;color:var(--gold)">✦</div>
+          <h3 class="mt-2">You're checked in.</h3>
+          <p class="muted mt-1">Your suite is ready. Tap below to unlock — works on iOS Wallet and Google Wallet.</p>
+          <div class="card mt-3" style="max-width:320px;margin:0 auto;padding:1.5rem;background:var(--navy);color:#fff">
+            <div class="eyebrow">Digital key</div>
+            <div style="font-family:var(--font-display);font-size:1.5rem;margin-top:0.5rem">Suite 812 — Overwater</div>
+            <div style="font-size:0.85rem;opacity:0.75;margin-top:0.5rem">Active Aug 12 — Aug 18</div>
+            <button class="btn btn-primary btn-block mt-3">Add to wallet</button>
+          </div>
+        </div>`
+  };
+  function render() {
+    document.querySelectorAll(".step").forEach(s => {
+      const n = +s.dataset.s;
+      s.classList.toggle("active", n === step);
+      s.classList.toggle("done", n < step);
+    });
+    const panel = document.getElementById("panel");
+    panel.innerHTML = panels[step];
+    if (step < 4) {
+      const nav = document.createElement("div");
+      nav.className = "flex gap-2 mt-3";
+      nav.innerHTML = `${step>1?'<button class="btn btn-outline" id="prev">Back</button>':''}<button class="btn btn-primary" id="next">${step===3?"Complete check-in":"Continue"}</button>`;
+      panel.appendChild(nav);
+      document.getElementById("next").onclick = () => { step++; render(); };
+      const prev = document.getElementById("prev"); if (prev) prev.onclick = () => { step--; render(); };
+    }
+  }
+  render();
+</script>
+</body>
+</html>

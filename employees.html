@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Employees — Admin</title><link rel="stylesheet" href="../assets/css/style.css" /></head>
+<body data-admin="employees" data-no-concierge>
+<div class="admin-shell"><div data-admin-nav></div>
+<main class="admin-main">
+<div class="admin-head"><div><div class="eyebrow">Team</div><h1>Employees</h1></div><button class="btn btn-primary">+ Add employee</button></div>
+<div class="table-wrap"><table class="data"><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Hotel</th><th>Shift</th><th>Status</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+</main></div>
+<script src="../assets/js/data.js"></script><script src="../assets/js/admin.js"></script>
+<script>
+  document.getElementById("tb").innerHTML = AURENCE.employees.map(e => `
+    <tr><td>${e.id}</td><td><b>${e.name}</b></td><td>${e.role}</td><td>${e.hotel}</td><td>${e.shift}</td>
+    <td><span class="status active">${e.status}</span></td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>`).join("");
+</script>
+</body></html>

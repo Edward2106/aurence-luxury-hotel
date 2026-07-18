@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin dashboard — Aurence</title>
+<link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body data-admin="dash" data-no-concierge>
+<div class="admin-shell">
+  <div data-admin-nav></div>
+  <main class="admin-main">
+    <div class="admin-head">
+      <div><div class="eyebrow">Overview</div><h1>Good afternoon, Isabelle.</h1></div>
+      <div class="flex gap-2"><button class="btn btn-outline">Export</button><button class="btn btn-primary">+ New booking</button></div>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="stat"><div class="lbl">Revenue (mo)</div><div class="val">$482K</div><div class="trend">+12% vs prev</div></div>
+      <div class="stat"><div class="lbl">Occupancy</div><div class="val">87%</div><div class="trend">+4pt</div></div>
+      <div class="stat"><div class="lbl">ADR</div><div class="val">$1,120</div><div class="trend">+$68</div></div>
+      <div class="stat"><div class="lbl">Bookings today</div><div class="val">42</div><div class="trend">+9</div></div>
+    </div>
+
+    <div class="grid grid-2 mt-4">
+      <div class="card" style="padding:1.5rem">
+        <h3>Revenue trend</h3>
+        <div class="line-chart mt-2">
+          <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+            <path d="M0,160 L50,140 L100,150 L150,110 L200,95 L250,70 L300,80 L350,40 L400,55" fill="none" stroke="var(--gold)" stroke-width="3" />
+            <path d="M0,160 L50,140 L100,150 L150,110 L200,95 L250,70 L300,80 L350,40 L400,55 L400,200 L0,200 Z" fill="var(--gold)" opacity="0.12" />
+          </svg>
+        </div>
+        <div class="flex justify-between muted mt-2" style="font-size:0.75rem"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span></div>
+      </div>
+      <div class="card" style="padding:1.5rem">
+        <h3>Occupancy by property</h3>
+        <div class="bar-chart mt-3" id="bars"></div>
+      </div>
+    </div>
+
+    <div class="section-head mt-4"><h2>Latest bookings</h2><a class="btn btn-outline btn-sm" href="bookings.html">View all →</a></div>
+    <div class="table-wrap mt-2">
+      <table class="data"><thead><tr><th>ID</th><th>Customer</th><th>Hotel</th><th>Dates</th><th>Total</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table>
+    </div>
+  </main>
+</div>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  const { bookings, hotels, LS } = AURENCE;
+  const rows = LS.get("aurence.bookings", bookings);
+  document.getElementById("tb").innerHTML = rows.slice(0,6).map(b => `
+    <tr><td>${b.id}</td><td>${b.customer}</td><td>${b.hotel}</td><td>${b.checkIn} → ${b.checkOut}</td><td>$${b.total.toLocaleString()}</td><td><span class="status ${b.status.toLowerCase()}">${b.status}</span></td></tr>`).join("");
+  const occ = [82,91,76,88,94,79];
+  const names = hotels.slice(0,6).map(h => h.name.split(" ")[0]);
+  document.getElementById("bars").innerHTML = occ.map((v,i) => `<div class="bar" style="height:${v*2}px"><b>${v}%</b><span>${names[i]}</span></div>`).join("");
+</script>
+</body>
+</html>

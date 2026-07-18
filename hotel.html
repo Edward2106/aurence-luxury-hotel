@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title id="doc-title">Hotel — Aurence Collection</title>
+<meta name="description" content="Explore rooms, amenities and reserve your stay at this Aurence-collection hotel." />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="hotels">
+<div data-nav></div>
+
+<main class="container" style="padding-top:6rem" id="root"></main>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { hotels, rooms, reviews } = AURENCE;
+  const id = new URLSearchParams(location.search).get("id") || hotels[0].id;
+  const h = hotels.find(x => x.id === id) || hotels[0];
+  document.getElementById("doc-title").textContent = h.name + " — Aurence Collection";
+
+  const root = document.getElementById("root");
+  root.innerHTML = `
+    <div class="fade-up" style="margin-bottom:1rem">
+      <a href="hotels.html" class="muted" style="font-size:0.85rem">← Back to collection</a>
+    </div>
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">${h.country}</div>
+        <h1 style="margin-top:0.5rem">${h.name}</h1>
+        <div class="muted mt-1">◉ ${h.location} · ${"★".repeat(h.stars)} · ${h.rating} (${h.reviews} reviews)</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-outline">♡ Save</button>
+        <button class="btn btn-outline">↗ Share</button>
+      </div>
+    </div>
+    <div class="gallery mt-3 fade-up">
+      ${h.gallery.map(g => `<img src="${g}" alt="" loading="lazy" />`).join("")}
+    </div>
+
+    <div class="detail-layout">
+      <div>
+        <div class="tabs">
+          <button class="tab active" data-tab="overview">Overview</button>
+          <button class="tab" data-tab="rooms">Rooms</button>
+          <button class="tab" data-tab="facilities">Facilities</button>
+          <button class="tab" data-tab="reviews">Reviews</button>
+        </div>
+
+        <section data-panel="overview">
+          <h3>A quiet retreat</h3>
+          <p class="muted mt-1">${h.description}</p>
+          <h3 class="mt-3">Highlights</h3>
+          <div class="grid grid-2 mt-2">
+            ${["Personal butler service","Michelin-starred dining","In-suite spa treatments","Private beach access"].map(x => `<div class="chip" style="padding:0.75rem 1rem">✦ ${x}</div>`).join("")}
+          </div>
+        </section>
+
+        <section data-panel="rooms" hidden>
+          ${rooms.map(r => `
+            <div class="room-item">
+              <img src="${r.image}" alt="${r.name}" />
+              <div>
+                <b style="font-family:var(--font-display);font-size:1.15rem">${r.name}</b>
+                <div class="muted mt-1">${r.size} · ${r.beds} · Up to ${r.capacity} guests</div>
+                <div class="mt-1">Complimentary breakfast, mini-bar, spa access.</div>
+              </div>
+              <div style="text-align:right">
+                <div class="price">$${r.price}<small>/night</small></div>
+                <a class="btn btn-navy btn-sm mt-1" href="booking.html?hotel=${h.id}&room=${r.id}">Reserve</a>
+              </div>
+            </div>`).join("")}
+        </section>
+
+        <section data-panel="facilities" hidden>
+          <div class="grid grid-3">
+            ${h.facilities.map(f => `<div class="chip" style="padding:1rem;text-align:center">${f}</div>`).join("")}
+          </div>
+        </section>
+
+        <section data-panel="reviews" hidden>
+          <div class="grid grid-2">
+            ${reviews.map(r => `
+              <div class="testimonial">
+                <div class="rating">${"★".repeat(r.rating)}</div>
+                <p class="mt-1">${r.text}</p>
+                <div class="muted mt-2" style="font-size:0.8rem"><b style="color:var(--text)">${r.author}</b> · ${r.date}</div>
+              </div>`).join("")}
+          </div>
+        </section>
+      </div>
+
+      <aside class="booking-box">
+        <div class="price">$${h.price}<small>/night</small></div>
+        <div class="rating mt-1">${"★".repeat(h.stars)} <span class="muted" style="font-size:0.8rem">${h.rating} · ${h.reviews} reviews</span></div>
+        <div class="field mt-2"><label>Check in</label><input type="date" class="input" id="ci" /></div>
+        <div class="field mt-2"><label>Check out</label><input type="date" class="input" id="co" /></div>
+        <div class="field mt-2"><label>Guests</label><select class="select" id="gs"><option>1 adult</option><option selected>2 adults</option><option>2 adults, 1 child</option><option>3 adults</option></select></div>
+        <div class="row mt-3"><span>3 nights × $${h.price}</span><b>$${h.price*3}</b></div>
+        <div class="row"><span>Taxes & service</span><b>$${Math.round(h.price*3*0.12)}</b></div>
+        <div class="row" style="border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.75rem"><b>Total</b><b style="font-family:var(--font-display);font-size:1.25rem">$${Math.round(h.price*3*1.12)}</b></div>
+        <a class="btn btn-primary btn-block btn-lg mt-3" href="booking.html?hotel=${h.id}">Reserve stay</a>
+        <div class="muted text-center mt-2" style="font-size:0.75rem">Free cancellation until 48h before arrival</div>
+      </aside>
+    </div>
+  `;
+
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== t.dataset.tab);
+  }));
+</script>
+</body>
+</html>

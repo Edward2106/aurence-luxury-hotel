@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aurence — Extraordinary stays, exceptionally curated</title>
+<meta name="description" content="A private collection of the world's most storied luxury hotels. Reserve overwater villas, alpine chalets and skyline suites with Aurence." />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="home">
+<div data-nav data-nav-transparent></div>
+
+<section class="hero">
+  <div class="hero-bg"><img src="assets/img/hero.jpg" alt="" /></div>
+  <div class="container hero-inner">
+    <div class="fade-up">
+      <div class="eyebrow">The Aurence Collection</div>
+      <h1 class="mt-1">Extraordinary stays, <em>exceptionally</em> curated.</h1>
+      <p>A private collection of the world's most storied hotels — reserved, unlocked and remembered through a single, quiet interface.</p>
+    </div>
+    <form class="search-bar fade-up d1" action="hotels.html">
+      <div class="search-field"><label>◉ Destination</label><input name="q" placeholder="Maldives, Paris…" /></div>
+      <div class="search-field"><label>▤ Check in</label><input type="date" name="in" /></div>
+      <div class="search-field"><label>▤ Check out</label><input type="date" name="out" /></div>
+      <div class="search-field"><label>◈ Guests</label><input name="g" placeholder="2 adults" /></div>
+      <button class="btn btn-primary btn-lg" type="submit">Search</button>
+    </form>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head">
+    <div><div class="eyebrow">Featured</div><h2>Hotels of the season</h2></div>
+    <a href="hotels.html" class="btn btn-ghost">View all →</a>
+  </div>
+  <div class="grid grid-3 mt-3" id="featured"></div>
+</section>
+
+<section class="section" style="background: rgba(0,0,0,0.02)">
+  <div class="container">
+    <div class="section-head"><div><div class="eyebrow">Where to next</div><h2>Popular destinations</h2></div></div>
+    <div class="grid grid-4 mt-3" id="destinations"></div>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="offer">
+    <div class="offer-grid">
+      <div>
+        <div class="eyebrow">Private offer</div>
+        <h2 style="color:#fff;margin-top:1rem">Five nights in the Maldives, reimagined.</h2>
+        <p style="color:rgba(255,255,255,0.75);margin-top:1rem">Complimentary seaplane transfer, private chef service and a fourth night on us — through September.</p>
+        <a href="hotels.html" class="btn btn-primary btn-lg" style="margin-top:1.5rem">Reserve the offer</a>
+      </div>
+      <div class="offer-feats">
+        <div class="offer-feat"><div class="icon">✦</div><span>Bespoke concierge</span></div>
+        <div class="offer-feat"><div class="icon">✧</div><span>Michelin dining</span></div>
+        <div class="offer-feat"><div class="icon">✦</div><span>In-suite chef</span></div>
+        <div class="offer-feat"><div class="icon">✧</div><span>Private transfers</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head"><div><div class="eyebrow">From our guests</div><h2>Quietly extraordinary</h2></div></div>
+  <div class="grid grid-3 mt-3" id="reviews"></div>
+</section>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { hotels, destinations, reviews } = AURENCE;
+  document.getElementById("featured").innerHTML = hotels.slice(0,6).map(renderHotelCard).join("");
+  document.getElementById("destinations").innerHTML = destinations.map(d => `
+    <a class="tile fade-up" href="hotels.html?q=${encodeURIComponent(d.name)}">
+      <img src="${d.image}" alt="${d.name}" loading="lazy" />
+      <div class="tile-label"><b>${d.name}</b><span>${d.count} hotels</span></div>
+    </a>`).join("");
+  document.getElementById("reviews").innerHTML = reviews.map(r => `
+    <div class="testimonial fade-up">
+      <div class="q">"</div>
+      <p>${r.text}</p>
+      <div class="muted" style="font-size:0.8rem;margin-top:1rem"><b style="color:var(--text)">${r.author}</b> · ${r.date}</div>
+    </div>`).join("");
+</script>
+</body>
+</html>

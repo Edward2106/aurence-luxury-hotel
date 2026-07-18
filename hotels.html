@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hotels — Aurence Collection</title>
+<meta name="description" content="Browse the Aurence collection of luxury hotels across the world. Filter by facility, star rating and price." />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="hotels">
+<div data-nav></div>
+
+<header class="page-head" style="padding-top:7rem">
+  <div class="container">
+    <div class="eyebrow">The Collection</div>
+    <h1 class="mt-1">Every stay, quietly extraordinary.</h1>
+    <p>Filter through hand-picked properties across four continents.</p>
+  </div>
+</header>
+
+<section class="container section-tight">
+  <div class="layout-listing">
+    <aside class="filter-panel">
+      <h4>Search</h4>
+      <input class="input" id="f-q" placeholder="Destination, hotel…" />
+      <h4>Price / night</h4>
+      <div class="flex gap-2"><input class="input" id="f-min" type="number" placeholder="Min" /><input class="input" id="f-max" type="number" placeholder="Max" /></div>
+      <h4>Stars</h4>
+      <div id="f-stars">
+        <label class="check-row"><input type="checkbox" value="5" checked /> 5 stars</label>
+        <label class="check-row"><input type="checkbox" value="4" /> 4 stars</label>
+      </div>
+      <h4>Facilities</h4>
+      <div id="f-fac">
+        <label class="check-row"><input type="checkbox" value="Pool" /> Pool</label>
+        <label class="check-row"><input type="checkbox" value="Spa" /> Spa</label>
+        <label class="check-row"><input type="checkbox" value="Restaurant" /> Restaurant</label>
+        <label class="check-row"><input type="checkbox" value="Gym" /> Gym</label>
+        <label class="check-row"><input type="checkbox" value="Parking" /> Parking</label>
+      </div>
+      <button class="btn btn-navy btn-block mt-3" id="apply-filter">Apply filters</button>
+      <button class="btn btn-ghost btn-block" id="reset-filter">Reset</button>
+    </aside>
+    <div>
+      <div class="section-head mb-2">
+        <div class="muted" id="count"></div>
+        <select class="select" id="sort" style="max-width:220px">
+          <option value="pop">Sort: Recommended</option>
+          <option value="low">Price: Low to high</option>
+          <option value="high">Price: High to low</option>
+          <option value="rating">Rating</option>
+        </select>
+      </div>
+      <div class="grid grid-2" id="grid"></div>
+    </div>
+  </div>
+</section>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { hotels } = AURENCE;
+  const params = new URLSearchParams(location.search);
+  if (params.get("q")) document.getElementById("f-q").value = params.get("q");
+
+  function apply() {
+    const q = document.getElementById("f-q").value.toLowerCase().trim();
+    const min = +document.getElementById("f-min").value || 0;
+    const max = +document.getElementById("f-max").value || Infinity;
+    const stars = Array.from(document.querySelectorAll("#f-stars input:checked")).map(i => +i.value);
+    const facs = Array.from(document.querySelectorAll("#f-fac input:checked")).map(i => i.value);
+    const sort = document.getElementById("sort").value;
+    let list = hotels.filter(h =>
+      (!q || (h.name+h.location+h.country).toLowerCase().includes(q)) &&
+      h.price >= min && h.price <= max &&
+      (stars.length === 0 || stars.includes(h.stars)) &&
+      facs.every(f => h.facilities.includes(f))
+    );
+    if (sort === "low") list.sort((a,b)=>a.price-b.price);
+    if (sort === "high") list.sort((a,b)=>b.price-a.price);
+    if (sort === "rating") list.sort((a,b)=>b.rating-a.rating);
+    document.getElementById("count").textContent = `${list.length} properties`;
+    document.getElementById("grid").innerHTML = list.map(renderHotelCard).join("") || `<div class="muted">No hotels match your filters.</div>`;
+  }
+  document.getElementById("apply-filter").addEventListener("click", apply);
+  document.getElementById("sort").addEventListener("change", apply);
+  document.getElementById("reset-filter").addEventListener("click", () => {
+    document.querySelectorAll(".filter-panel input").forEach(i => { if (i.type === "checkbox") i.checked = i.value === "5"; else i.value = ""; });
+    apply();
+  });
+  apply();
+</script>
+</body>
+</html>

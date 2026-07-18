@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>My stays — Aurence</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="dashboard">
+<div data-nav></div>
+
+<main class="container" style="padding-top:7rem">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Welcome back</div>
+      <h1 class="mt-1" id="greet">Good evening, Amelia.</h1>
+      <p class="muted mt-1">Your journey with Aurence, at a glance.</p>
+    </div>
+    <div class="chip" style="padding:0.75rem 1.25rem;background:var(--gold-soft);border-color:var(--gold);color:var(--navy)">✦ Platinum member</div>
+  </div>
+
+  <div class="grid grid-4 mt-3">
+    <div class="stat"><div class="lbl">Upcoming</div><div class="val" id="s-upcoming">0</div><div class="trend">next stays</div></div>
+    <div class="stat"><div class="lbl">Total stays</div><div class="val">12</div><div class="trend">since 2021</div></div>
+    <div class="stat"><div class="lbl">Loyalty points</div><div class="val">42,580</div><div class="trend">+2,400 pending</div></div>
+    <div class="stat"><div class="lbl">Nights this year</div><div class="val">27</div><div class="trend">+4 vs last year</div></div>
+  </div>
+
+  <div class="section-head mt-4"><h2>Upcoming stays</h2><a class="btn btn-outline btn-sm" href="hotels.html">New reservation</a></div>
+  <div class="mt-2" id="upcoming"></div>
+
+  <div class="section-head mt-4"><h2>Past stays</h2></div>
+  <div class="mt-2" id="past"></div>
+
+  <div class="section-head mt-4"><h2>Quick actions</h2></div>
+  <div class="grid grid-3 mt-2">
+    <a href="checkin.html" class="card" style="padding:1.5rem"><b>✦ Online check-in</b><p class="muted mt-1">Skip the front desk.</p></a>
+    <a href="services.html" class="card" style="padding:1.5rem"><b>✧ In-stay services</b><p class="muted mt-1">Request dining, spa & more.</p></a>
+    <a href="profile.html" class="card" style="padding:1.5rem"><b>✦ Preferences</b><p class="muted mt-1">Update your travel profile.</p></a>
+  </div>
+</main>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { LS } = AURENCE;
+  const bookings = LS.get("aurence.bookings", []);
+  const now = new Date();
+  const upcoming = bookings.filter(b => new Date(b.checkIn) >= now || b.status === "Confirmed" || b.status === "Pending");
+  const past = bookings.filter(b => !upcoming.includes(b));
+  document.getElementById("s-upcoming").textContent = upcoming.length;
+
+  const row = (b) => `
+    <div class="card" style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:1.25rem 1.5rem;margin-bottom:0.75rem">
+      <div>
+        <b style="font-family:var(--font-display);font-size:1.15rem">${b.hotel}</b>
+        <div class="muted mt-1">${b.room} · ${b.checkIn} → ${b.checkOut} · ${b.id}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="status ${b.status.toLowerCase()}">${b.status}</span>
+        <div class="mt-1"><b>$${b.total.toLocaleString()}</b></div>
+        <a class="btn btn-outline btn-sm mt-1" href="checkin.html">Check in</a>
+      </div>
+    </div>`;
+  document.getElementById("upcoming").innerHTML = upcoming.map(row).join("") || `<div class="muted">No upcoming stays.</div>`;
+  document.getElementById("past").innerHTML = past.map(row).join("") || `<div class="muted">No past stays yet.</div>`;
+
+  const hr = new Date().getHours();
+  const p = LS.get("aurence.profile");
+  document.getElementById("greet").textContent = `${hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening"}, ${p.firstName}.`;
+</script>
+</body>
+</html>

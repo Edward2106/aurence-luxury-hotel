@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hotels — Admin</title><link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body data-admin="hotels" data-no-concierge>
+<div class="admin-shell">
+  <div data-admin-nav></div>
+  <main class="admin-main">
+    <div class="admin-head"><div><div class="eyebrow">Inventory</div><h1>Hotels</h1></div><button class="btn btn-primary">+ Add hotel</button></div>
+    <div class="table-wrap">
+      <table class="data"><thead><tr><th>Name</th><th>Location</th><th>Rooms</th><th>Rating</th><th>ADR</th><th>Occupancy</th><th></th></tr></thead><tbody id="tb"></tbody></table>
+    </div>
+  </main>
+</div>
+<script src="../assets/js/data.js"></script><script src="../assets/js/admin.js"></script>
+<script>
+  document.getElementById("tb").innerHTML = AURENCE.hotels.map(h => `
+    <tr><td><div style="display:flex;gap:0.75rem;align-items:center"><img src="${h.image}" style="width:48px;height:48px;border-radius:8px;object-fit:cover" /><b>${h.name}</b></div></td>
+    <td>${h.location}, ${h.country}</td><td>${40 + Math.floor(Math.random()*80)}</td><td>${"★".repeat(h.stars)}</td><td>$${h.price}</td><td>${75+Math.floor(Math.random()*20)}%</td>
+    <td><button class="btn btn-outline btn-sm">Edit</button></td></tr>`).join("");
+</script>
+</body></html>

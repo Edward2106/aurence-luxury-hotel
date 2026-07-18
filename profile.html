@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Profile — Aurence</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="dashboard">
+<div data-nav></div>
+
+<main class="container" style="padding-top:7rem">
+  <div class="eyebrow">Account</div>
+  <h1 class="mt-1">Profile & preferences</h1>
+
+  <div class="detail-layout mt-3">
+    <div>
+      <div class="card" style="padding:2rem">
+        <h3>Personal information</h3>
+        <form id="profile-form" class="grid grid-2 mt-2">
+          <div class="field"><label>First name</label><input class="input" name="firstName" /></div>
+          <div class="field"><label>Last name</label><input class="input" name="lastName" /></div>
+          <div class="field"><label>Email</label><input class="input" name="email" type="email" /></div>
+          <div class="field"><label>Phone</label><input class="input" name="phone" /></div>
+          <div style="grid-column:span 2" class="flex gap-2"><button class="btn btn-primary" type="submit">Save changes</button></div>
+        </form>
+      </div>
+
+      <div class="card mt-3" style="padding:2rem">
+        <h3>Travel preferences</h3>
+        <div class="grid grid-3 mt-2">
+          <div class="field"><label>Preferred bed</label>
+            <select class="select" id="p-bed"><option>King</option><option>Twin</option><option>Queen</option></select></div>
+          <div class="field"><label>Pillow</label>
+            <select class="select" id="p-pillow"><option>Down</option><option>Memory foam</option><option>Firm</option></select></div>
+          <div class="field"><label>Newspaper</label>
+            <select class="select" id="p-news"><option>FT</option><option>NYT</option><option>None</option></select></div>
+        </div>
+        <button class="btn btn-navy mt-3" id="save-prefs">Save preferences</button>
+      </div>
+    </div>
+    <aside>
+      <div class="card" style="padding:2rem;text-align:center">
+        <div style="width:88px;height:88px;border-radius:50%;background:var(--gold-soft);color:var(--navy);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;margin:0 auto">A</div>
+        <div style="font-family:var(--font-display);font-size:1.4rem;margin-top:1rem" id="pname"></div>
+        <div class="muted" id="pemail"></div>
+        <div class="chip mt-2" style="background:var(--gold-soft);border-color:var(--gold);color:var(--navy)">✦ Platinum member</div>
+        <div class="mt-3 muted" style="font-size:0.85rem">Member since 2021<br />42,580 loyalty points</div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { LS } = AURENCE;
+  const p = LS.get("aurence.profile");
+  const form = document.getElementById("profile-form");
+  ["firstName","lastName","email","phone"].forEach(k => form[k].value = p[k] || "");
+  ["bed","pillow","news"].forEach(k => { const map = {bed:"bed",pillow:"pillow",news:"newspaper"}; const el = document.getElementById("p-"+k); el.value = p.preferences[map[k]]; });
+  document.getElementById("pname").textContent = p.firstName + " " + p.lastName;
+  document.getElementById("pemail").textContent = p.email;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const np = { ...p, firstName: fd.get("firstName"), lastName: fd.get("lastName"), email: fd.get("email"), phone: fd.get("phone") };
+    LS.set("aurence.profile", np);
+    toast("Profile updated.");
+    document.getElementById("pname").textContent = np.firstName + " " + np.lastName;
+    document.getElementById("pemail").textContent = np.email;
+  });
+  document.getElementById("save-prefs").addEventListener("click", () => {
+    const cur = LS.get("aurence.profile");
+    cur.preferences = { bed: document.getElementById("p-bed").value, pillow: document.getElementById("p-pillow").value, newspaper: document.getElementById("p-news").value };
+    LS.set("aurence.profile", cur);
+    toast("Preferences saved.");
+  });
+</script>
+</body>
+</html>

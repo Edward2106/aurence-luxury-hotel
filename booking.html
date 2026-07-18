@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reserve — Aurence Collection</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-page="hotels">
+<div data-nav></div>
+
+<main class="container" style="padding-top:7rem">
+  <div class="eyebrow">Reservation</div>
+  <h1 class="mt-1">Complete your booking</h1>
+
+  <div class="stepper mt-3">
+    <div class="step done"><b>1. Dates</b><span>Confirmed</span></div>
+    <div class="step active"><b>2. Guest details</b><span>In progress</span></div>
+    <div class="step"><b>3. Payment</b><span>Pending</span></div>
+    <div class="step"><b>4. Confirmation</b><span>Pending</span></div>
+  </div>
+
+  <div class="detail-layout">
+    <form id="book-form">
+      <h3>Guest information</h3>
+      <div class="grid grid-2 mt-2">
+        <div class="field"><label>First name</label><input class="input" name="first" required /></div>
+        <div class="field"><label>Last name</label><input class="input" name="last" required /></div>
+        <div class="field"><label>Email</label><input class="input" name="email" type="email" required /></div>
+        <div class="field"><label>Phone</label><input class="input" name="phone" required /></div>
+        <div class="field"><label>Country</label><input class="input" name="country" /></div>
+        <div class="field"><label>Special requests</label><input class="input" name="notes" placeholder="Anniversary, dietary…" /></div>
+      </div>
+
+      <h3 class="mt-4">Payment method</h3>
+      <div class="grid grid-3 mt-2">
+        <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="card" checked /> Card</label>
+        <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="paypal" /> PayPal</label>
+        <label class="chip" style="padding:1rem;display:flex;gap:0.5rem;align-items:center;cursor:pointer"><input type="radio" name="pay" value="applepay" /> Apple Pay</label>
+      </div>
+      <div class="grid grid-2 mt-2" id="card-fields">
+        <div class="field" style="grid-column:span 2"><label>Card number</label><input class="input" placeholder="1234 5678 9012 3456" /></div>
+        <div class="field"><label>Expiry</label><input class="input" placeholder="MM/YY" /></div>
+        <div class="field"><label>CVC</label><input class="input" placeholder="123" /></div>
+      </div>
+
+      <div class="mt-3 flex gap-2">
+        <a href="hotels.html" class="btn btn-outline">Back</a>
+        <button class="btn btn-primary btn-lg" type="submit">Confirm reservation</button>
+      </div>
+    </form>
+
+    <aside class="booking-box">
+      <img id="sum-img" style="width:100%;border-radius:12px;aspect-ratio:4/3;object-fit:cover" />
+      <div style="font-family:var(--font-display);font-size:1.25rem;margin-top:1rem" id="sum-name"></div>
+      <div class="muted" id="sum-loc"></div>
+      <div class="row mt-2"><span>Check in</span><b id="sum-ci">Aug 12, 2026</b></div>
+      <div class="row"><span>Check out</span><b id="sum-co">Aug 15, 2026</b></div>
+      <div class="row"><span>Guests</span><b>2 adults</b></div>
+      <div class="row"><span>3 nights</span><b id="sum-sub"></b></div>
+      <div class="row"><span>Taxes & service</span><b id="sum-tax"></b></div>
+      <div class="row" style="border-top:1px solid var(--border);padding-top:0.75rem"><b>Total</b><b id="sum-total" style="font-family:var(--font-display);font-size:1.25rem"></b></div>
+    </aside>
+  </div>
+</main>
+
+<div data-footer></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const { hotels, LS } = AURENCE;
+  const id = new URLSearchParams(location.search).get("hotel") || hotels[0].id;
+  const h = hotels.find(x => x.id === id) || hotels[0];
+  document.getElementById("sum-img").src = h.image;
+  document.getElementById("sum-name").textContent = h.name;
+  document.getElementById("sum-loc").textContent = h.location + ", " + h.country;
+  const sub = h.price * 3, tax = Math.round(sub * 0.12);
+  document.getElementById("sum-sub").textContent = "$" + sub;
+  document.getElementById("sum-tax").textContent = "$" + tax;
+  document.getElementById("sum-total").textContent = "$" + (sub + tax);
+
+  document.getElementById("book-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const list = LS.get("aurence.bookings", []);
+    const id2 = "BK-" + Math.floor(1000 + Math.random()*9000);
+    const fd = new FormData(e.target);
+    list.unshift({ id: id2, customer: `${fd.get("first")} ${fd.get("last")}`, hotel: h.name, room: "Deluxe Ocean Suite", checkIn: "2026-08-12", checkOut: "2026-08-15", status: "Confirmed", total: sub + tax });
+    LS.set("aurence.bookings", list);
+    toast("Reservation confirmed — " + id2);
+    setTimeout(() => location.href = "dashboard.html", 900);
+  });
+  document.querySelectorAll('input[name="pay"]').forEach(r => r.addEventListener("change", () => {
+    document.getElementById("card-fields").style.display = r.value === "card" && r.checked ? "grid" : "none";
+  }));
+</script>
+</body>
+</html>

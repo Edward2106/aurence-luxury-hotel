@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reviews — Admin</title><link rel="stylesheet" href="../assets/css/style.css" /></head>
+<body data-admin="reviews" data-no-concierge>
+<div class="admin-shell"><div data-admin-nav></div>
+<main class="admin-main">
+<div class="admin-head"><div><div class="eyebrow">Feedback</div><h1>Guest reviews</h1></div></div>
+<div class="grid grid-2" id="rev"></div>
+</main></div>
+<script src="../assets/js/data.js"></script><script src="../assets/js/admin.js"></script>
+<script>
+  document.getElementById("rev").innerHTML = AURENCE.reviews.map(r => `
+    <div class="card" style="padding:1.75rem">
+      <div class="flex justify-between"><b>${r.author}</b><span class="rating">${"★".repeat(r.rating)}</span></div>
+      <div class="muted" style="font-size:0.8rem">${r.date}</div>
+      <p class="mt-2">${r.text}</p>
+      <div class="flex gap-2 mt-2"><button class="btn btn-outline btn-sm">Reply</button><button class="btn btn-ghost btn-sm">Flag</button></div>
+    </div>`).join("");
+</script>
+</body></html>

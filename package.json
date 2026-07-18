@@ -1,0 +1,7 @@
+{
+  "name": "aurence-static",
+  "private": true,
+  "scripts": {
+    "dev": "npx --yes http-server . -c-1 -s"
+  }
+}

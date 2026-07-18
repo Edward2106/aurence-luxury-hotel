@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Customers — Admin</title><link rel="stylesheet" href="../assets/css/style.css" /></head>
+<body data-admin="customers" data-no-concierge>
+<div class="admin-shell"><div data-admin-nav></div>
+<main class="admin-main">
+<div class="admin-head"><div><div class="eyebrow">CRM</div><h1>Customers</h1></div><button class="btn btn-primary">+ Add customer</button></div>
+<div class="table-wrap"><table class="data"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Tier</th><th>Stays</th><th>Lifetime spend</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+</main></div>
+<script src="../assets/js/data.js"></script><script src="../assets/js/admin.js"></script>
+<script>
+  document.getElementById("tb").innerHTML = AURENCE.customers.map(c => `
+    <tr><td>${c.id}</td><td><b>${c.name}</b></td><td>${c.email}</td>
+    <td><span class="status ${c.tier==='Platinum'?'confirmed':c.tier==='Gold'?'pending':'occupied'}">${c.tier}</span></td>
+    <td>${c.stays}</td><td>$${c.spent.toLocaleString()}</td><td><button class="btn btn-outline btn-sm">View</button></td></tr>`).join("");
+</script>
+</body></html>
