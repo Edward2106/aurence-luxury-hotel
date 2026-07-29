@@ -6,39 +6,58 @@ dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const PLACEHOLDER_STRINGS = [
+  'your_mysql_host',
+  'your_mysql_user',
+  'your_mysql_password',
+  'your_database_name',
+  'replace_with_secure_secret',
+  'replace_with_a_secure_secret',
+];
+
+function isPlaceholderValue(val) {
+  if (!val || typeof val !== 'string') return false;
+  const normalized = val.trim().toLowerCase();
+  return PLACEHOLDER_STRINGS.some((p) => normalized.includes(p));
+}
+
 // Support both standard DB_* and Railway MYSQL* environment variable names
-const hostInput = process.env.DB_HOST || process.env.MYSQLHOST;
-const portInput = process.env.DB_PORT || process.env.MYSQLPORT;
-const dbUserInput = process.env.DB_USER || process.env.MYSQLUSER;
-const dbPasswordInput = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : process.env.MYSQLPASSWORD;
-const dbNameInput = process.env.DB_NAME || process.env.MYSQLDATABASE;
+const rawHost = process.env.DB_HOST || process.env.MYSQLHOST;
+const rawPort = process.env.DB_PORT || process.env.MYSQLPORT;
+const rawUser = process.env.DB_USER || process.env.MYSQLUSER;
+const rawPassword = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : process.env.MYSQLPASSWORD;
+const rawDbName = process.env.DB_NAME || process.env.MYSQLDATABASE;
 
 if (isProduction) {
   const missingVars = [];
-  if (!hostInput) missingVars.push('DB_HOST (or MYSQLHOST)');
-  if (!dbUserInput) missingVars.push('DB_USER (or MYSQLUSER)');
-  if (dbPasswordInput === undefined || dbPasswordInput === null) missingVars.push('DB_PASSWORD (or MYSQLPASSWORD)');
-  if (!dbNameInput) missingVars.push('DB_NAME (or MYSQLDATABASE)');
+  if (!rawHost || isPlaceholderValue(rawHost)) missingVars.push('DB_HOST (or MYSQLHOST)');
+  if (!rawUser || isPlaceholderValue(rawUser)) missingVars.push('DB_USER (or MYSQLUSER)');
+  if (rawPassword === undefined || rawPassword === null || isPlaceholderValue(rawPassword)) {
+    missingVars.push('DB_PASSWORD (or MYSQLPASSWORD)');
+  }
+  if (!rawDbName || isPlaceholderValue(rawDbName)) missingVars.push('DB_NAME (or MYSQLDATABASE)');
 
   if (missingVars.length > 0) {
-    console.error('❌ FATAL DATABASE ERROR: Production database configuration is incomplete.');
-    console.error(`👉 Missing required variable(s): ${missingVars.join(', ')}`);
-    console.error('👉 Localhost fallbacks are strictly prohibited in NODE_ENV=production.');
+    console.error('❌ FATAL DATABASE ERROR: Production database configuration is incomplete or contains placeholder values.');
+    console.error(`👉 Unconfigured / Placeholder variable(s): ${missingVars.join(', ')}`);
+    console.error('👉 Placeholder values (e.g. your_mysql_host) and localhost fallbacks are strictly prohibited in NODE_ENV=production.');
     process.exit(1);
   }
 
-  if (hostInput === '127.0.0.1' || hostInput === 'localhost') {
-    console.error(`❌ FATAL DATABASE ERROR: Production DB_HOST cannot be '${hostInput}'.`);
-    console.error('👉 Localhost hosts are prohibited in production mode.');
+  if (rawHost === '127.0.0.1' || rawHost === 'localhost') {
+    console.error(`❌ FATAL DATABASE ERROR: Production DB_HOST cannot be '${rawHost}'.`);
+    console.error('👉 Localhost database hosts are prohibited in production mode.');
     process.exit(1);
   }
 }
 
-export const host = hostInput || '127.0.0.1';
-export const port = parseInt(portInput || '3306', 10);
-export const dbUser = dbUserInput || 'root';
-export const dbPassword = dbPasswordInput !== undefined && dbPasswordInput !== null ? dbPasswordInput : '12345678';
-export const dbName = dbNameInput || 'luxury_hotel';
+// In local development, sanitize placeholders to local MySQL defaults
+export const host = !rawHost || isPlaceholderValue(rawHost) ? '127.0.0.1' : rawHost;
+export const port = parseInt(rawPort || '3306', 10);
+export const dbUser = !rawUser || isPlaceholderValue(rawUser) ? 'root' : rawUser;
+export const dbPassword =
+  rawPassword === undefined || rawPassword === null || isPlaceholderValue(rawPassword) ? '12345678' : rawPassword;
+export const dbName = !rawDbName || isPlaceholderValue(rawDbName) ? 'luxury_hotel' : rawDbName;
 
 export const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   host,
