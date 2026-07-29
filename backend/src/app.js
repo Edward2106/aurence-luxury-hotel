@@ -12,7 +12,12 @@ const defaultOrigins = [
   'https://benevolent-vacherin-b7fcaf.netlify.app',
 ];
 
-const envOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
+const envOrigins = (
+  process.env.FRONTEND_URL ||
+  process.env.CLIENT_URLS ||
+  process.env.CLIENT_URL ||
+  ''
+)
   .split(',')
   .map((url) => url.trim())
   .filter(Boolean);
