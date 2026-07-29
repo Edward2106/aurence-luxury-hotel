@@ -23,8 +23,8 @@ async function startServer() {
 
     await seedInitialAdmin();
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Aurence Luxury Hotel Express Server running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Aurence Luxury Hotel Express Server running on port ${PORT} (0.0.0.0)`);
     });
   } catch (error) {
     console.error('❌ Error starting server:', error);
