@@ -1,7 +1,14 @@
 {
-  "name": "aurence-static",
+  "name": "luxury-hotel-management-system",
   "private": true,
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "npx --yes http-server . -c-1 -s"
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "concurrently \"npm --prefix frontend run dev\" \"npm --prefix backend run dev\""
+  },
+  "dependencies": {
+    "concurrently": "^9.0.1"
   }
 }

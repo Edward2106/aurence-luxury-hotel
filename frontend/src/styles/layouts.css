@@ -1,0 +1,11 @@
+.layout-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-layout-container {
+  min-height: 100vh;
+  display: flex;
+  background-color: var(--color-navy-950);
+}

@@ -1,0 +1,8 @@
+.glass-card-hover {
+  transition: all 0.3s ease-in-out;
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(212, 175, 55, 0.2);
+}

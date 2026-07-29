@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+coverage
+*.sql
+*.webp
+*.png
+*.jpg
+*.log
+test-results
