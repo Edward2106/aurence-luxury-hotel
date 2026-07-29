@@ -196,40 +196,71 @@ export const logout = async (req, res) => {
 
 export const seedInitialAdmin = async () => {
   try {
-    const adminEmail = 'admin@aurence.com';
-    let admin = await User.findOne({ where: { email: adminEmail } });
-    const hashedAdminPassword = await bcrypt.hash('Admin@123', 10);
-    if (!admin) {
-      admin = await User.create({
+    const seedAccounts = [
+      {
+        email: 'admin@aurencehotel.com',
+        password: 'Admin@123',
         fullName: 'System Administrator',
-        email: adminEmail,
-        password: hashedAdminPassword,
         role: 'admin',
-        status: 'active',
-      });
-    } else {
-      admin.password = hashedAdminPassword;
-      admin.status = 'active';
-      await admin.save();
-    }
-
-    const customerEmail = 'customer@aurence.com';
-    let customer = await User.findOne({ where: { email: customerEmail } });
-    const hashedCustomerPassword = await bcrypt.hash('Customer@123', 10);
-    if (!customer) {
-      customer = await User.create({
-        fullName: 'Demo Customer',
-        email: customerEmail,
-        phone: '0901234567',
-        password: hashedCustomerPassword,
+        phone: '0900000000',
+      },
+      {
+        email: 'user@aurencehotel.com',
+        password: 'User@123',
+        fullName: 'Standard Hotel Customer',
         role: 'customer',
-        status: 'active',
-      });
-    } else {
-      customer.password = hashedCustomerPassword;
-      customer.status = 'active';
-      await customer.save();
+        phone: '0900000099',
+      },
+      {
+        email: 'admin@aurence.com',
+        password: 'Admin@123',
+        fullName: 'System Administrator',
+        role: 'admin',
+        phone: null,
+      },
+      {
+        email: 'customer@aurence.com',
+        password: 'Customer@123',
+        fullName: 'Demo Customer',
+        role: 'customer',
+        phone: '0901234567',
+      },
+      {
+        email: 'admin.test@luxuryhotel.local',
+        password: 'Admin@Test123',
+        fullName: 'Test Administrator',
+        role: 'admin',
+        phone: '0900000001',
+      },
+      {
+        email: 'customer.test@luxuryhotel.local',
+        password: 'Customer@Test123',
+        fullName: 'Test Customer',
+        role: 'customer',
+        phone: '0900000003',
+      },
+    ];
+
+    for (const acc of seedAccounts) {
+      let user = await User.findOne({ where: { email: acc.email } });
+      const hashedPassword = await bcrypt.hash(acc.password, 10);
+      if (!user) {
+        await User.create({
+          fullName: acc.fullName,
+          email: acc.email,
+          phone: acc.phone,
+          password: hashedPassword,
+          role: acc.role,
+          status: 'active',
+        });
+      } else {
+        user.password = hashedPassword;
+        user.status = 'active';
+        user.role = acc.role;
+        await user.save();
+      }
     }
+    console.log('✅ Initial admin and user accounts verified and synchronized.');
   } catch (error) {
     console.warn('⚠️ Demo accounts initialization notice:', error.message);
   }
