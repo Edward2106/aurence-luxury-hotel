@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Crown, Mail, Lock, LogIn, Sparkles, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Crown, Mail, Lock, LogIn, Sparkles, ShieldCheck, AlertCircle, Info } from 'lucide-react';
 import { loginSchema } from '../../services/api';
 import { useAuthContext } from '../../context/AuthContext';
 
 export const LoginPage = () => {
   const { login, loading } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectMessage = location.state?.message || '';
+  const redirectFrom = location.state?.from || '';
+
   const [apiError, setApiError] = useState('');
 
   const {
@@ -36,6 +41,8 @@ export const LoginPage = () => {
       const userRole = (res?.user?.role || '').toLowerCase();
       if (userRole === 'admin') {
         navigate('/admin');
+      } else if (redirectFrom) {
+        navigate(redirectFrom);
       } else {
         navigate('/');
       }
@@ -75,6 +82,13 @@ export const LoginPage = () => {
           <h2 className="font-serif text-2xl font-bold text-slate-100">Đăng Nhập Aurence</h2>
           <p className="text-xs text-slate-400">Đăng nhập hệ thống quản lý & đặc quyền khách hàng</p>
         </div>
+
+        {redirectMessage && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-center gap-2">
+            <Info className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>{redirectMessage}</span>
+          </div>
+        )}
 
         <div className="p-3 rounded-2xl bg-navy-950/80 border border-gold-500/20 space-y-2">
           <span className="text-[10px] text-gold-400 font-bold uppercase tracking-wider block text-center">

@@ -9,9 +9,10 @@ export const protect = (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
 
-  if (!token) {
+  if (!token || token === 'null' || token === 'undefined') {
     return res.status(401).json({
-      message: 'Truy cập bị từ chối. Vui lòng đăng nhập để thực hiện.',
+      success: false,
+      message: 'Vui lòng đăng nhập để sử dụng dịch vụ.',
     });
   }
 
@@ -21,7 +22,19 @@ export const protect = (req, res, next) => {
     next();
   } catch (error) {
     return res.status(401).json({
-      message: 'Phiên đăng nhập đã hết hạn hoặc Token không hợp lệ.',
+      success: false,
+      message: 'Vui lòng đăng nhập để sử dụng dịch vụ.',
+    });
+  }
+};
+
+export const admin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Bạn không có quyền thực hiện thao tác này.',
     });
   }
 };
