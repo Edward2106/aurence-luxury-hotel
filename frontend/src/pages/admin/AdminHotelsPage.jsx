@@ -1,19 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, MapPin } from 'lucide-react';
+import { Plus, Trash2, MapPin, Layers, DollarSign, Users } from 'lucide-react';
 import { hotelService } from '../../services/hotelService';
+import { roomService } from '../../services/roomService';
 import { Modal } from '../../components/Modal';
 import { SearchBar } from '../../components/SearchBar';
 import { SafeImage } from '../../components/SafeImage';
+import { formatCurrencyVND } from '../../services/api';
 
 export const AdminHotelsPage = () => {
   const [hotels, setHotels] = useState([]);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Hotel form
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [description, setDescription] = useState('');
+
+  // Room Type modal state
+  const [roomTypeModalOpen, setRoomTypeModalOpen] = useState(false);
+  const [selectedHotelForRoomType, setSelectedHotelForRoomType] = useState(null);
+  const [hotelRoomTypes, setHotelRoomTypes] = useState([]);
+  const [rtName, setRtName] = useState('');
+  const [rtPrice, setRtPrice] = useState('');
+  const [rtAdults, setRtAdults] = useState('2');
+  const [rtChildren, setRtChildren] = useState('1');
+  const [rtDescription, setRtDescription] = useState('');
+  const [rtSubmitting, setRtSubmitting] = useState(false);
 
   const fetchHotels = () => {
     hotelService.getHotels()
@@ -76,12 +90,62 @@ export const AdminHotelsPage = () => {
     fetchHotels();
   };
 
+  // Open Room Type Management for a specific hotel
+  const openRoomTypeModal = async (hotel) => {
+    setSelectedHotelForRoomType(hotel);
+    setRtName('');
+    setRtPrice('2500000');
+    setRtAdults('2');
+    setRtChildren('1');
+    setRtDescription('');
+    setRoomTypeModalOpen(true);
+
+    try {
+      const res = await roomService.getRoomTypesByHotel(hotel.id);
+      setHotelRoomTypes(res.roomTypes || []);
+    } catch (err) {
+      const rts = hotel.RoomTypes || hotel.roomTypes || [];
+      setHotelRoomTypes(rts);
+    }
+  };
+
+  // Create new Room Type for selected hotel
+  const handleSaveRoomType = async (e) => {
+    e.preventDefault();
+    if (!rtName || !rtPrice || !selectedHotelForRoomType) return;
+
+    setRtSubmitting(true);
+    try {
+      await roomService.createRoomType({
+        hotelId: selectedHotelForRoomType.id,
+        name: rtName,
+        basePrice: parseFloat(rtPrice),
+        price: parseFloat(rtPrice),
+        pricePerNight: parseFloat(rtPrice),
+        capacityAdults: parseInt(rtAdults, 10),
+        capacityChildren: parseInt(rtChildren, 10),
+        description: rtDescription || 'Hạng phòng cao cấp sang trọng',
+        isActive: true,
+      });
+
+      const res = await roomService.getRoomTypesByHotel(selectedHotelForRoomType.id);
+      setHotelRoomTypes(res.roomTypes || []);
+      setRtName('');
+      setRtPrice('2500000');
+      alert('Tạo hạng phòng mới thành công!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi khi tạo hạng phòng.');
+    } finally {
+      setRtSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-gold-400">Danh Mục Hệ Thống</span>
-          <h1 className="font-serif text-3xl font-bold text-slate-100">Quản Lý Khách Sạn & Resort</h1>
+          <h1 className="font-serif text-3xl font-bold text-slate-100">Quản Lý Khách Sạn & Hạng Phòng</h1>
         </div>
         <button
           onClick={handleOpenCreate}
@@ -99,21 +163,31 @@ export const AdminHotelsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {filtered.map((hotel) => (
-          <div key={hotel.id} className="p-6 rounded-3xl bg-navy-900 border border-gold-500/20 space-y-4 shadow-xl">
-            <SafeImage
-              src={hotel.imageUrl || hotel.image || '/images/hotels/hotel-default.jpg'}
-              alt={hotel.name}
-              fallbackCategory="hotel"
-              className="w-full h-44 rounded-2xl object-cover"
-            />
-            <h3 className="font-serif text-lg font-bold text-slate-100">{hotel.name}</h3>
-            <p className="text-xs text-slate-400 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-gold-400" /> {hotel.city}
-            </p>
-            <div className="flex gap-2 pt-2">
+          <div key={hotel.id} className="p-6 rounded-3xl bg-navy-900 border border-gold-500/20 space-y-4 shadow-xl flex flex-col justify-between">
+            <div className="space-y-4">
+              <SafeImage
+                src={hotel.imageUrl || hotel.image || '/images/hotels/hotel-default.jpg'}
+                alt={hotel.name}
+                fallbackCategory="hotel"
+                className="w-full h-44 rounded-2xl object-cover"
+              />
+              <h3 className="font-serif text-lg font-bold text-slate-100">{hotel.name}</h3>
+              <p className="text-xs text-slate-400 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-gold-400" /> {hotel.city}
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => openRoomTypeModal(hotel)}
+                className="flex-1 py-2 px-3 rounded-xl bg-navy-950 border border-slate-800 text-gold-400 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-800"
+              >
+                <Layers className="w-3.5 h-3.5" /> Quản Lý Hạng Phòng
+              </button>
               <button
                 onClick={() => handleDelete(hotel.id)}
                 className="py-2 px-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold"
+                title="Xóa khách sạn"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -122,6 +196,7 @@ export const AdminHotelsPage = () => {
         ))}
       </div>
 
+      {/* CREATE HOTEL MODAL */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Thêm Khách Sạn Mới">
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1">
@@ -162,6 +237,97 @@ export const AdminHotelsPage = () => {
           </button>
         </form>
       </Modal>
+
+      {/* ROOM TYPE MANAGEMENT MODAL */}
+      {roomTypeModalOpen && selectedHotelForRoomType && (
+        <Modal
+          isOpen={roomTypeModalOpen}
+          onClose={() => setRoomTypeModalOpen(false)}
+          title={`Hạng Phòng - ${selectedHotelForRoomType.name}`}
+        >
+          <div className="space-y-6 text-xs">
+            {/* List of current room types */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-gold-400 uppercase text-[10px] tracking-wider">Danh Sách Hạng Phòng Hiện Có</h4>
+              {hotelRoomTypes.length === 0 ? (
+                <div className="p-3 rounded-xl bg-navy-950 border border-slate-800 text-slate-400 text-center">
+                  Chưa có hạng phòng nào cho khách sạn này.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {hotelRoomTypes.map((rt) => (
+                    <div key={rt.id} className="p-3 rounded-xl bg-navy-950 border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-slate-100">{rt.name}</div>
+                        <div className="text-[11px] text-slate-400">
+                          {rt.capacityAdults} người lớn, {rt.capacityChildren} trẻ em
+                        </div>
+                      </div>
+                      <div className="font-mono font-bold text-gold-400">
+                        {formatCurrencyVND(rt.basePrice || rt.price || rt.pricePerNight || 0)}/đêm
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Form to create room type */}
+            <form onSubmit={handleSaveRoomType} className="space-y-3 pt-4 border-t border-slate-800">
+              <h4 className="font-semibold text-slate-200">Thêm Hạng Phòng Mới</h4>
+              <div className="space-y-1">
+                <label className="text-slate-400">Tên Hạng Phòng (VD: Executive Suite, Deluxe Ocean)</label>
+                <input
+                  type="text"
+                  required
+                  value={rtName}
+                  onChange={(e) => setRtName(e.target.value)}
+                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-400">Giá 1 Đêm (VNĐ)</label>
+                  <input
+                    type="number"
+                    required
+                    value={rtPrice}
+                    onChange={(e) => setRtPrice(e.target.value)}
+                    className="w-full bg-navy-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-400">Người Lớn</label>
+                  <input
+                    type="number"
+                    value={rtAdults}
+                    onChange={(e) => setRtAdults(e.target.value)}
+                    className="w-full bg-navy-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-400">Trẻ Em</label>
+                  <input
+                    type="number"
+                    value={rtChildren}
+                    onChange={(e) => setRtChildren(e.target.value)}
+                    className="w-full bg-navy-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={rtSubmitting}
+                className="w-full py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow mt-2"
+              >
+                {rtSubmitting ? 'Đang Xử Lý...' : 'Lưu Hạng Phòng'}
+              </button>
+            </form>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

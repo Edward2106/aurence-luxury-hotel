@@ -146,3 +146,29 @@ export const deleteHotel = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+export const getRoomTypesByHotel = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const roomTypes = await RoomType.findAll({
+      where: { hotelId: parseInt(hotelId, 10) },
+      include: [Hotel],
+    });
+    return res.json({
+      roomTypes: roomTypes.map((rt) => {
+        const plain = rt.toJSON ? rt.toJSON() : rt;
+        const rawPrice = Number(plain.basePrice || plain.price || plain.pricePerNight);
+        const price = Number.isFinite(rawPrice) && rawPrice >= 0 ? rawPrice : null;
+        return {
+          ...plain,
+          basePrice: price,
+          pricePerNight: price,
+          price: price,
+          isActive: plain.isActive !== false,
+        };
+      }),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};

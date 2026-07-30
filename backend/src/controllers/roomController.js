@@ -18,6 +18,10 @@ const formatRoom = (r) => {
   const plain = r.toJSON ? r.toJSON() : r;
   if (plain.RoomType) {
     plain.RoomType = formatRoomType(plain.RoomType);
+    plain.roomType = plain.RoomType;
+  }
+  if (plain.Hotel) {
+    plain.hotel = plain.Hotel;
   }
   return plain;
 };
@@ -63,17 +67,27 @@ export const createRoom = async (req, res) => {
     const { hotelId, roomTypeId, roomNumber, floor, status } = req.body;
 
     if (!hotelId || !roomTypeId || !roomNumber) {
-      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ: Khách sạn, Hạng phòng, và Số phòng.' });
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp đầy đủ: Khách sạn, Hạng phòng, và Số phòng.',
+      });
     }
 
     const hotel = await Hotel.findByPk(hotelId);
     if (!hotel) {
-      return res.status(404).json({ message: 'Khách sạn không tồn tại.' });
+      return res.status(404).json({ success: false, message: 'Khách sạn không tồn tại.' });
     }
 
     const roomType = await RoomType.findByPk(roomTypeId);
     if (!roomType) {
-      return res.status(404).json({ message: 'Hạng phòng không tồn tại.' });
+      return res.status(404).json({ success: false, message: 'Hạng phòng không tồn tại.' });
+    }
+
+    if (parseInt(roomType.hotelId, 10) !== parseInt(hotelId, 10)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Hạng phòng không thuộc khách sạn đã chọn.',
+      });
     }
 
     const trimmedNumber = String(roomNumber).trim();
@@ -81,7 +95,10 @@ export const createRoom = async (req, res) => {
       where: { hotelId, roomNumber: trimmedNumber },
     });
     if (existing) {
-      return res.status(400).json({ message: `Số phòng "${trimmedNumber}" đã tồn tại trong khách sạn này.` });
+      return res.status(409).json({
+        success: false,
+        message: `Số phòng "${trimmedNumber}" đã tồn tại trong khách sạn này.`,
+      });
     }
 
     const parsedFloor = floor !== undefined && floor !== null && floor !== '' ? parseInt(floor, 10) : 1;
@@ -89,15 +106,19 @@ export const createRoom = async (req, res) => {
     const validStatus = status && allowedStatuses.includes(status.toLowerCase()) ? status.toLowerCase() : 'available';
 
     const newRoom = await Room.create({
-      hotelId,
-      roomTypeId,
+      hotelId: parseInt(hotelId, 10),
+      roomTypeId: parseInt(roomTypeId, 10),
       roomNumber: trimmedNumber,
       floor: isNaN(parsedFloor) ? 1 : parsedFloor,
       status: validStatus,
     });
 
     const fullRoom = await Room.findByPk(newRoom.id, { include: [Hotel, RoomType] });
-    return res.status(201).json({ message: 'Tạo phòng mới thành công.', room: formatRoom(fullRoom) });
+    return res.status(201).json({
+      success: true,
+      message: 'Tạo phòng mới thành công.',
+      room: formatRoom(fullRoom),
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -110,8 +131,22 @@ export const updateRoom = async (req, res) => {
 
     const { hotelId, roomTypeId, roomNumber, floor, status } = req.body;
 
-    const targetHotelId = hotelId || room.hotelId;
+    const targetHotelId = hotelId ? parseInt(hotelId, 10) : room.hotelId;
+    const targetRoomTypeId = roomTypeId ? parseInt(roomTypeId, 10) : room.roomTypeId;
     const targetRoomNumber = roomNumber ? String(roomNumber).trim() : room.roomNumber;
+
+    if (roomTypeId || hotelId) {
+      const roomType = await RoomType.findByPk(targetRoomTypeId);
+      if (!roomType) {
+        return res.status(404).json({ success: false, message: 'Hạng phòng không tồn tại.' });
+      }
+      if (parseInt(roomType.hotelId, 10) !== targetHotelId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Hạng phòng không thuộc khách sạn đã chọn.',
+        });
+      }
+    }
 
     if (roomNumber || hotelId) {
       const existing = await Room.findOne({
@@ -122,14 +157,17 @@ export const updateRoom = async (req, res) => {
         },
       });
       if (existing) {
-        return res.status(400).json({ message: `Số phòng "${targetRoomNumber}" đã trùng với phòng khác trong khách sạn.` });
+        return res.status(409).json({
+          success: false,
+          message: `Số phòng "${targetRoomNumber}" đã tồn tại trong khách sạn này.`,
+        });
       }
     }
 
     const allowedStatuses = ['available', 'occupied', 'reserved', 'cleaning', 'maintenance', 'inactive'];
     const updateData = {};
-    if (hotelId) updateData.hotelId = hotelId;
-    if (roomTypeId) updateData.roomTypeId = roomTypeId;
+    if (hotelId) updateData.hotelId = targetHotelId;
+    if (roomTypeId) updateData.roomTypeId = targetRoomTypeId;
     if (roomNumber) updateData.roomNumber = targetRoomNumber;
     if (floor !== undefined && floor !== null && floor !== '') {
       const p = parseInt(floor, 10);
@@ -141,7 +179,11 @@ export const updateRoom = async (req, res) => {
 
     await room.update(updateData);
     const updatedRoom = await Room.findByPk(room.id, { include: [Hotel, RoomType] });
-    return res.json({ message: 'Cập nhật thông tin phòng thành công.', room: formatRoom(updatedRoom) });
+    return res.json({
+      success: true,
+      message: 'Cập nhật thông tin phòng thành công.',
+      room: formatRoom(updatedRoom),
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

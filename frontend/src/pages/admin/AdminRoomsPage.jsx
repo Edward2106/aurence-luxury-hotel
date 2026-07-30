@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Search, Filter, RefreshCw, X, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, RefreshCw, X, AlertCircle, Building, Link as LinkIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { roomService } from '../../services/roomService';
 import { hotelService } from '../../services/hotelService';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -31,6 +32,7 @@ export const AdminRoomsPage = () => {
   const [hotels, setHotels] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRoomTypesLoading, setIsRoomTypesLoading] = useState(false);
 
   // Filters & Search
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -51,6 +53,7 @@ export const AdminRoomsPage = () => {
     roomNumber: '',
     floor: '1',
     status: 'available',
+    isActive: true,
   });
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,13 +107,16 @@ export const AdminRoomsPage = () => {
   // Filtered rooms calculation
   const filteredRooms = useMemo(() => {
     return rooms.filter((r) => {
+      const hId = r.hotelId || r.hotel?.id;
+      const rtId = r.roomTypeId || r.roomType?.id;
+
       if (searchKeyword && !r.roomNumber.toLowerCase().includes(searchKeyword.toLowerCase())) {
         return false;
       }
-      if (selectedHotelFilter && String(r.hotelId) !== String(selectedHotelFilter)) {
+      if (selectedHotelFilter && String(hId) !== String(selectedHotelFilter)) {
         return false;
       }
-      if (selectedRoomTypeFilter && String(r.roomTypeId) !== String(selectedRoomTypeFilter)) {
+      if (selectedRoomTypeFilter && String(rtId) !== String(selectedRoomTypeFilter)) {
         return false;
       }
       if (selectedStatusFilter && r.status.toLowerCase() !== selectedStatusFilter.toLowerCase()) {
@@ -120,16 +126,47 @@ export const AdminRoomsPage = () => {
     });
   }, [rooms, searchKeyword, selectedHotelFilter, selectedRoomTypeFilter, selectedStatusFilter]);
 
+  // Handle hotel selection change in form
+  const handleFormHotelChange = async (newHotelId) => {
+    setFormState((prev) => ({
+      ...prev,
+      hotelId: newHotelId,
+      roomTypeId: '', // Clear roomTypeId when hotel changes
+    }));
+
+    if (!newHotelId) return;
+
+    setIsRoomTypesLoading(true);
+    try {
+      const res = await roomService.getRoomTypesByHotel(newHotelId).catch(() => null);
+      if (res && res.roomTypes) {
+        setRoomTypes((prev) => {
+          const others = prev.filter((rt) => String(rt.hotelId) !== String(newHotelId));
+          return [...others, ...res.roomTypes];
+        });
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải hạng phòng theo khách sạn:', err);
+    } finally {
+      setIsRoomTypesLoading(false);
+    }
+  };
+
   // Open Add Modal
   const openAddModal = () => {
     setFormError('');
     setFormState({
-      hotelId: hotels[0]?.id || '',
-      roomTypeId: roomTypes[0]?.id || '',
+      hotelId: hotels[0]?.id ? String(hotels[0].id) : '',
+      roomTypeId: '',
       roomNumber: '',
       floor: '1',
       status: 'available',
+      isActive: true,
     });
+
+    if (hotels[0]?.id) {
+      handleFormHotelChange(String(hotels[0].id));
+    }
     setIsAddModalOpen(true);
   };
 
@@ -137,13 +174,23 @@ export const AdminRoomsPage = () => {
   const openEditModal = (room) => {
     setSelectedRoom(room);
     setFormError('');
+    const hId = room.hotelId || room.hotel?.id || '';
+    const rtId = room.roomTypeId || room.roomType?.id || '';
+
     setFormState({
-      hotelId: room.hotelId || '',
-      roomTypeId: room.roomTypeId || '',
-      roomNumber: room.roomNumber || '',
+      hotelId: String(hId),
+      roomTypeId: String(rtId),
+      roomNumber: String(room.roomNumber || ''),
       floor: String(room.floor || '1'),
       status: room.status || 'available',
+      isActive: room.isActive !== false,
     });
+
+    if (hId) {
+      handleFormHotelChange(String(hId)).then(() => {
+        setFormState((prev) => ({ ...prev, roomTypeId: String(rtId) }));
+      });
+    }
     setIsEditModalOpen(true);
   };
 
@@ -158,14 +205,28 @@ export const AdminRoomsPage = () => {
     e.preventDefault();
     setFormError('');
 
-    if (!formState.hotelId || !formState.roomTypeId || !formState.roomNumber) {
-      setFormError('Vui lòng điền đầy đủ: Khách sạn, Hạng phòng và Số phòng.');
+    if (!formState.hotelId) {
+      setFormError('Vui lòng chọn khách sạn.');
+      return;
+    }
+    if (!formState.roomTypeId) {
+      setFormError('Vui lòng chọn hạng phòng.');
+      return;
+    }
+    if (!formState.roomNumber) {
+      setFormError('Vui lòng nhập số phòng.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await roomService.createRoom(formState);
+      await roomService.createRoom({
+        hotelId: parseInt(formState.hotelId, 10),
+        roomTypeId: parseInt(formState.roomTypeId, 10),
+        roomNumber: formState.roomNumber,
+        floor: formState.floor,
+        status: formState.status,
+      });
       setIsAddModalOpen(false);
       fetchData();
     } catch (err) {
@@ -180,14 +241,20 @@ export const AdminRoomsPage = () => {
     e.preventDefault();
     setFormError('');
 
-    if (!formState.roomNumber) {
-      setFormError('Số phòng không được để trống.');
+    if (!formState.hotelId || !formState.roomTypeId || !formState.roomNumber) {
+      setFormError('Vui lòng chọn đầy đủ Khách sạn, Hạng phòng và Số phòng.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await roomService.updateRoom(selectedRoom.id, formState);
+      await roomService.updateRoom(selectedRoom.id, {
+        hotelId: parseInt(formState.hotelId, 10),
+        roomTypeId: parseInt(formState.roomTypeId, 10),
+        roomNumber: formState.roomNumber,
+        floor: formState.floor,
+        status: formState.status,
+      });
       setIsEditModalOpen(false);
       fetchData();
     } catch (err) {
@@ -216,7 +283,7 @@ export const AdminRoomsPage = () => {
 
   // RoomTypes matching selected hotel in form
   const availableFormRoomTypes = useMemo(() => {
-    if (!formState.hotelId) return roomTypes;
+    if (!formState.hotelId) return [];
     return roomTypes.filter((rt) => String(rt.hotelId) === String(formState.hotelId));
   }, [roomTypes, formState.hotelId]);
 
@@ -245,6 +312,22 @@ export const AdminRoomsPage = () => {
         </div>
       </div>
 
+      {/* Empty Hotels Warning Alert */}
+      {hotels.length === 0 && !isLoading && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3">
+            <Building className="w-5 h-5 text-amber-400 shrink-0" />
+            <span>Chưa có khách sạn trong hệ thống. Vui lòng tạo khách sạn trước khi thêm phòng.</span>
+          </div>
+          <Link
+            to="/admin/hotels"
+            className="px-4 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold text-xs shrink-0 flex items-center gap-1.5"
+          >
+            <Building className="w-3.5 h-3.5" /> Quản Lý Khách Sạn
+          </Link>
+        </div>
+      )}
+
       {/* Filters Section */}
       <div className="p-6 rounded-3xl bg-navy-900 border border-gold-500/20 space-y-4 shadow-xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -267,7 +350,7 @@ export const AdminRoomsPage = () => {
             <option value="">Tất cả Khách Sạn</option>
             {hotels.map((h) => (
               <option key={h.id} value={h.id}>
-                {h.name}
+                {h.name} — {h.city || ''}
               </option>
             ))}
           </select>
@@ -312,63 +395,65 @@ export const AdminRoomsPage = () => {
               <thead>
                 <tr className="border-b border-slate-800 text-gold-400 uppercase text-[10px] tracking-wider">
                   <th className="py-3 px-3">Số Phòng</th>
-                  <th className="py-3 px-3">Tầng</th>
                   <th className="py-3 px-3">Khách Sạn</th>
-                  <th className="py-3 px-3">Hạng Suite</th>
-                  <th className="py-3 px-3">Giá Đêm</th>
+                  <th className="py-3 px-3">Tầng</th>
+                  <th className="py-3 px-3">Hạng Phòng</th>
+                  <th className="py-3 px-3">Giá Mỗi Đêm</th>
                   <th className="py-3 px-3">Trạng Thái Badge</th>
                   <th className="py-3 px-3">Thay Đổi Trạng Thái</th>
                   <th className="py-3 px-3 text-right">Thao Tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {filteredRooms.map((room) => (
-                  <tr key={room.id} className="hover:bg-navy-950/50">
-                    <td className="py-4 px-3 font-mono font-bold text-slate-100 text-sm">{room.roomNumber}</td>
-                    <td className="py-4 px-3 text-slate-300 font-medium">{formatFloor(room.floor)}</td>
-                    <td className="py-4 px-3 text-slate-300">{room.Hotel?.name || 'Aurence Hotel'}</td>
-                    <td className="py-4 px-3 font-semibold text-slate-200">
-                      {room.RoomType ? room.RoomType.name : 'Deluxe Room'}
-                    </td>
-                    <td className="py-4 px-3 font-mono font-bold text-gold-400">
-                      {formatCurrencyVND(room.RoomType?.basePrice || room.RoomType?.price || 0)}
-                    </td>
-                    <td className="py-4 px-3">
-                      <StatusBadge status={room.status} />
-                    </td>
-                    <td className="py-4 px-3">
-                      <select
-                        value={(room.status || 'available').toLowerCase()}
-                        onChange={(e) => handleStatusChange(room.id, e.target.value)}
-                        className="bg-navy-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none cursor-pointer"
-                      >
-                        {STATUS_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label} ({opt.value})
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-4 px-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEditModal(room)}
-                          className="p-1.5 rounded-lg bg-navy-950 border border-slate-800 text-slate-300 hover:text-gold-400"
-                          title="Sửa phòng"
+                {filteredRooms.map((room) => {
+                  const hName = room.hotel?.name || room.Hotel?.name || 'Aurence Hotel';
+                  const rtName = room.roomType?.name || room.RoomType?.name || 'Deluxe Room';
+                  const rtPrice = room.roomType?.basePrice || room.RoomType?.basePrice || room.roomType?.price || room.RoomType?.price || 0;
+
+                  return (
+                    <tr key={room.id} className="hover:bg-navy-950/50">
+                      <td className="py-4 px-3 font-mono font-bold text-slate-100 text-sm">{room.roomNumber}</td>
+                      <td className="py-4 px-3 text-slate-300 font-semibold">{hName}</td>
+                      <td className="py-4 px-3 text-slate-300 font-medium">{formatFloor(room.floor)}</td>
+                      <td className="py-4 px-3 font-semibold text-slate-200">{rtName}</td>
+                      <td className="py-4 px-3 font-mono font-bold text-gold-400">{formatCurrencyVND(rtPrice)}</td>
+                      <td className="py-4 px-3">
+                        <StatusBadge status={room.status} />
+                      </td>
+                      <td className="py-4 px-3">
+                        <select
+                          value={(room.status || 'available').toLowerCase()}
+                          onChange={(e) => handleStatusChange(room.id, e.target.value)}
+                          className="bg-navy-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none cursor-pointer"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(room)}
-                          className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20"
-                          title="Xóa phòng"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {STATUS_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label} ({opt.value})
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-4 px-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEditModal(room)}
+                            className="p-1.5 rounded-lg bg-navy-950 border border-slate-800 text-slate-300 hover:text-gold-400"
+                            title="Sửa phòng"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(room)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20"
+                            title="Xóa phòng"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -395,43 +480,60 @@ export const AdminRoomsPage = () => {
 
             <form onSubmit={handleAddSubmit} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Khách Sạn</label>
+                <label className="font-semibold text-slate-300">KHÁCH SẠN *</label>
                 <select
+                  required
                   value={formState.hotelId}
-                  onChange={(e) => setFormState({ ...formState, hotelId: e.target.value })}
-                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
+                  onChange={(e) => handleFormHotelChange(e.target.value)}
+                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none cursor-pointer"
                 >
-                  <option value="">-- Chọn Khách Sạn --</option>
+                  <option value="">-- Chọn khách sạn --</option>
                   {hotels.map((h) => (
                     <option key={h.id} value={h.id}>
-                      {h.name}
+                      {h.name} — {h.city || ''}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Hạng Phòng (Room Type)</label>
+                <label className="font-semibold text-slate-300">HẠNG PHÒNG *</label>
                 <select
+                  required
+                  disabled={!formState.hotelId || isRoomTypesLoading}
                   value={formState.roomTypeId}
                   onChange={(e) => setFormState({ ...formState, roomTypeId: e.target.value })}
-                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
+                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">-- Chọn Hạng Phòng --</option>
+                  <option value="">
+                    {!formState.hotelId
+                      ? '-- Vui lòng chọn khách sạn trước --'
+                      : isRoomTypesLoading
+                      ? '-- Đang tải hạng phòng... --'
+                      : availableFormRoomTypes.length === 0
+                      ? '-- Khách sạn chưa có hạng phòng --'
+                      : '-- Chọn hạng phòng --'}
+                  </option>
                   {availableFormRoomTypes.map((rt) => (
                     <option key={rt.id} value={rt.id}>
                       {rt.name} - {formatCurrencyVND(rt.basePrice || rt.price || 0)}/đêm
                     </option>
                   ))}
                 </select>
+                {formState.hotelId && availableFormRoomTypes.length === 0 && !isRoomTypesLoading && (
+                  <p className="text-[11px] text-amber-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" /> Khách sạn này chưa có hạng phòng. Vui lòng tạo hạng phòng trước khi thêm phòng.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Số Phòng (e.g. 101, 202)</label>
+                  <label className="font-semibold text-slate-300">SỐ PHÒNG *</label>
                   <input
                     type="text"
-                    placeholder="101"
+                    required
+                    placeholder="VD: 101, 202"
                     value={formState.roomNumber}
                     onChange={(e) => setFormState({ ...formState, roomNumber: e.target.value })}
                     className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
@@ -439,7 +541,7 @@ export const AdminRoomsPage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Tầng (Floor)</label>
+                  <label className="font-semibold text-slate-300">TẦNG (FLOOR)</label>
                   <input
                     type="number"
                     placeholder="1"
@@ -451,7 +553,7 @@ export const AdminRoomsPage = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Trạng Thái Ban Đầu</label>
+                <label className="font-semibold text-slate-300">TRẠNG THÁI</label>
                 <select
                   value={formState.status}
                   onChange={(e) => setFormState({ ...formState, status: e.target.value })}
@@ -475,8 +577,8 @@ export const AdminRoomsPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow"
+                  disabled={isSubmitting || isLoading || isRoomTypesLoading || !formState.hotelId || !formState.roomTypeId || !formState.roomNumber}
+                  className="px-5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Đang Xử Lý...' : 'Lưu Phòng'}
                 </button>
@@ -506,27 +608,40 @@ export const AdminRoomsPage = () => {
 
             <form onSubmit={handleEditSubmit} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Khách Sạn</label>
+                <label className="font-semibold text-slate-300">KHÁCH SẠN *</label>
                 <select
+                  required
                   value={formState.hotelId}
-                  onChange={(e) => setFormState({ ...formState, hotelId: e.target.value })}
-                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
+                  onChange={(e) => handleFormHotelChange(e.target.value)}
+                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none cursor-pointer"
                 >
+                  <option value="">-- Chọn khách sạn --</option>
                   {hotels.map((h) => (
                     <option key={h.id} value={h.id}>
-                      {h.name}
+                      {h.name} — {h.city || ''}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Hạng Phòng (Room Type)</label>
+                <label className="font-semibold text-slate-300">HẠNG PHÒNG *</label>
                 <select
+                  required
+                  disabled={!formState.hotelId || isRoomTypesLoading}
                   value={formState.roomTypeId}
                   onChange={(e) => setFormState({ ...formState, roomTypeId: e.target.value })}
-                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
+                  className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  <option value="">
+                    {!formState.hotelId
+                      ? '-- Vui lòng chọn khách sạn trước --'
+                      : isRoomTypesLoading
+                      ? '-- Đang tải hạng phòng... --'
+                      : availableFormRoomTypes.length === 0
+                      ? '-- Khách sạn chưa có hạng phòng --'
+                      : '-- Chọn hạng phòng --'}
+                  </option>
                   {availableFormRoomTypes.map((rt) => (
                     <option key={rt.id} value={rt.id}>
                       {rt.name} - {formatCurrencyVND(rt.basePrice || rt.price || 0)}/đêm
@@ -537,9 +652,10 @@ export const AdminRoomsPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Số Phòng</label>
+                  <label className="font-semibold text-slate-300">SỐ PHÒNG *</label>
                   <input
                     type="text"
+                    required
                     value={formState.roomNumber}
                     onChange={(e) => setFormState({ ...formState, roomNumber: e.target.value })}
                     className="w-full bg-navy-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
@@ -547,7 +663,7 @@ export const AdminRoomsPage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Tầng (Floor)</label>
+                  <label className="font-semibold text-slate-300">TẦNG (FLOOR)</label>
                   <input
                     type="number"
                     value={formState.floor}
@@ -558,7 +674,7 @@ export const AdminRoomsPage = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Trạng Thái</label>
+                <label className="font-semibold text-slate-300">TRẠNG THÁI</label>
                 <select
                   value={formState.status}
                   onChange={(e) => setFormState({ ...formState, status: e.target.value })}
@@ -582,8 +698,8 @@ export const AdminRoomsPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow"
+                  disabled={isSubmitting || isLoading || isRoomTypesLoading || !formState.hotelId || !formState.roomTypeId || !formState.roomNumber}
+                  className="px-5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Đang Xử Lý...' : 'Lưu Thay Đổi'}
                 </button>
@@ -601,7 +717,7 @@ export const AdminRoomsPage = () => {
               <Trash2 className="w-5 h-5" /> Xác Nhận Xóa Phòng
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Bạn có chắc chắn muốn xóa phòng <strong className="text-gold-400">#{selectedRoom.roomNumber}</strong> thuộc {selectedRoom.Hotel?.name}?
+              Bạn có chắc chắn muốn xóa phòng <strong className="text-gold-400">#{selectedRoom.roomNumber}</strong> thuộc {selectedRoom.hotel?.name || selectedRoom.Hotel?.name}?
             </p>
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />

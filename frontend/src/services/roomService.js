@@ -26,6 +26,16 @@ export const roomService = {
     return response.data;
   },
 
+  getRoomTypes: async (params) => {
+    const response = await api.get('/rooms/types', { params });
+    return response.data;
+  },
+
+  getRoomTypesByHotel: async (hotelId) => {
+    const response = await api.get(`/hotels/${hotelId}/room-types`);
+    return response.data;
+  },
+
   deleteRoom: async (id) => {
     const response = await api.delete(`/admin/rooms/${id}`);
     return response.data;
