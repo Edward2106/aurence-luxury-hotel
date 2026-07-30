@@ -116,12 +116,12 @@ Frontend sẽ khởi chạy tại: `http://127.0.0.1:5173`
 ## Tài Khoản Thử Nghiệm (Demo Accounts)
 
 - **Tài khoản Khách hàng (Customer)**:
-  - Email: `customer.test@luxuryhotel.local`
-  - Password: `Customer@Test123`
-- **Tài khoản Quản trị viên (Admin)**:
-  - Email: `admin.test@luxuryhotel.local`
-  - Password: `Admin@Test123`
+  - Email: `user@aurencehotel.com`
+  - Password: `User@123`
 
+- **Tài khoản Quản trị viên (Admin)**:
+  - Email: `admin@aurencehotel.com`
+  - Password: `Admin@123`
 ---
 
 ## Lưu Ý Bảo Mật (Security Best Practices)
