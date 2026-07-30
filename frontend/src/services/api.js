@@ -1,12 +1,8 @@
 import axios from 'axios';
 import { z } from 'zod';
+import { API_BASE_URL, SERVER_BASE_URL } from '../config/api';
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  'http://localhost:5000/api';
-
-export const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+export { API_BASE_URL, SERVER_BASE_URL };
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
