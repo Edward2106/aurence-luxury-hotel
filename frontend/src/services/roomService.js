@@ -36,6 +36,21 @@ export const roomService = {
     return response.data;
   },
 
+  createRoomType: async (data) => {
+    const response = await api.post('/rooms/types', data);
+    return response.data;
+  },
+
+  updateRoomType: async (id, data) => {
+    const response = await api.put(`/rooms/types/${id}`, data);
+    return response.data;
+  },
+
+  deleteRoomType: async (id) => {
+    const response = await api.delete(`/rooms/types/${id}`);
+    return response.data;
+  },
+
   deleteRoom: async (id) => {
     const response = await api.delete(`/admin/rooms/${id}`);
     return response.data;

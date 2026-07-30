@@ -25,6 +25,10 @@ import {
   updateRoom,
   updateRoomStatus,
   deleteRoom,
+  getRoomTypes,
+  createRoomType,
+  updateRoomType,
+  deleteRoomType,
 } from '../controllers/roomController.js';
 import { Booking, Room, User, Invoice, Review } from '../models/index.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -84,6 +88,12 @@ router.put('/rooms/:id', updateRoom);
 router.patch('/rooms/:id/status', updateRoomStatus);
 router.put('/rooms/:id/status', updateRoomStatus);
 router.delete('/rooms/:id', deleteRoom);
+
+// Room Types
+router.get('/room-types', getRoomTypes);
+router.post('/room-types', createRoomType);
+router.put('/room-types/:id', updateRoomType);
+router.delete('/room-types/:id', deleteRoomType);
 
 // Users
 router.get('/users', getUsers);

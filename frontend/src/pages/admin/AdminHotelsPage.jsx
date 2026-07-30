@@ -28,6 +28,8 @@ export const AdminHotelsPage = () => {
   const [rtChildren, setRtChildren] = useState('1');
   const [rtDescription, setRtDescription] = useState('');
   const [rtSubmitting, setRtSubmitting] = useState(false);
+  const [rtError, setRtError] = useState('');
+  const [rtSuccess, setRtSuccess] = useState('');
 
   const fetchHotels = () => {
     hotelService.getHotels()
@@ -98,6 +100,8 @@ export const AdminHotelsPage = () => {
     setRtAdults('2');
     setRtChildren('1');
     setRtDescription('');
+    setRtError('');
+    setRtSuccess('');
     setRoomTypeModalOpen(true);
 
     try {
@@ -112,19 +116,38 @@ export const AdminHotelsPage = () => {
   // Create new Room Type for selected hotel
   const handleSaveRoomType = async (e) => {
     e.preventDefault();
-    if (!rtName || !rtPrice || !selectedHotelForRoomType) return;
+    setRtError('');
+    setRtSuccess('');
+
+    if (!selectedHotelForRoomType || !selectedHotelForRoomType.id) {
+      setRtError('Không xác định được khách sạn đang chọn.');
+      return;
+    }
+
+    const trimmedName = rtName.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setRtError('Tên hạng phòng phải có ít nhất 2 ký tự.');
+      return;
+    }
+
+    const parsedPrice = parseFloat(rtPrice);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      setRtError('Giá phòng phải là một số không âm.');
+      return;
+    }
 
     setRtSubmitting(true);
     try {
       await roomService.createRoomType({
-        hotelId: selectedHotelForRoomType.id,
-        name: rtName,
-        basePrice: parseFloat(rtPrice),
-        price: parseFloat(rtPrice),
-        pricePerNight: parseFloat(rtPrice),
-        capacityAdults: parseInt(rtAdults, 10),
-        capacityChildren: parseInt(rtChildren, 10),
-        description: rtDescription || 'Hạng phòng cao cấp sang trọng',
+        hotelId: parseInt(selectedHotelForRoomType.id, 10),
+        name: trimmedName,
+        basePrice: parsedPrice,
+        price: parsedPrice,
+        pricePerNight: parsedPrice,
+        capacity: (parseInt(rtAdults, 10) || 2) + (parseInt(rtChildren, 10) || 0),
+        capacityAdults: parseInt(rtAdults, 10) || 2,
+        capacityChildren: parseInt(rtChildren, 10) || 0,
+        description: rtDescription.trim() || 'Hạng phòng cao cấp sang trọng',
         isActive: true,
       });
 
@@ -132,9 +155,14 @@ export const AdminHotelsPage = () => {
       setHotelRoomTypes(res.roomTypes || []);
       setRtName('');
       setRtPrice('2500000');
-      alert('Tạo hạng phòng mới thành công!');
+      setRtSuccess('Tạo hạng phòng mới thành công!');
     } catch (err) {
-      alert(err.response?.data?.message || 'Có lỗi khi tạo hạng phòng.');
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Không thể tạo hạng phòng.';
+      setRtError(message);
     } finally {
       setRtSubmitting(false);
     }
@@ -246,6 +274,17 @@ export const AdminHotelsPage = () => {
           title={`Hạng Phòng - ${selectedHotelForRoomType.name}`}
         >
           <div className="space-y-6 text-xs">
+            {rtError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-2">
+                <span>{rtError}</span>
+              </div>
+            )}
+            {rtSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
+                <span>{rtSuccess}</span>
+              </div>
+            )}
+
             {/* List of current room types */}
             <div className="space-y-2">
               <h4 className="font-semibold text-gold-400 uppercase text-[10px] tracking-wider">Danh Sách Hạng Phòng Hiện Có</h4>
@@ -260,7 +299,7 @@ export const AdminHotelsPage = () => {
                       <div>
                         <div className="font-bold text-slate-100">{rt.name}</div>
                         <div className="text-[11px] text-slate-400">
-                          {rt.capacityAdults} người lớn, {rt.capacityChildren} trẻ em
+                          {rt.capacity || rt.capacityAdults || 2} sức chứa
                         </div>
                       </div>
                       <div className="font-mono font-bold text-gold-400">
@@ -280,6 +319,7 @@ export const AdminHotelsPage = () => {
                 <input
                   type="text"
                   required
+                  placeholder="Executive Suite"
                   value={rtName}
                   onChange={(e) => setRtName(e.target.value)}
                   className="w-full bg-navy-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
@@ -320,7 +360,7 @@ export const AdminHotelsPage = () => {
               <button
                 type="submit"
                 disabled={rtSubmitting}
-                className="w-full py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow mt-2"
+                className="w-full py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold shadow-gold-glow mt-2 disabled:opacity-50"
               >
                 {rtSubmitting ? 'Đang Xử Lý...' : 'Lưu Hạng Phòng'}
               </button>
