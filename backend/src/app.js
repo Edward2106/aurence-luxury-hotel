@@ -14,11 +14,11 @@ function sanitizeOrigin(urlStr) {
 }
 
 const defaultOrigins = [
-  'http://127.0.0.1:5173',
-  'http://localhost:5173',
-  'http://127.0.0.1:5000',
-  'http://localhost:5000',
   'https://benevolent-vacherin-b7fcaf.netlify.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
 ];
 
 const envRaw = [
@@ -39,32 +39,36 @@ export const allowedOrigins = Array.from(
 );
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser requests with no origin (e.g. mobile apps, curl, server health checks)
-    if (!origin) {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ''))) {
       return callback(null, true);
     }
-
-    const cleanReqOrigin = sanitizeOrigin(origin);
-    if (allowedOrigins.includes(cleanReqOrigin)) {
-      return callback(null, true);
-    }
-
-    // Do NOT throw an error; return false so CORS headers are omitted cleanly
     return callback(null, false);
   },
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true,
-  optionsSuccessStatus: 200,
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Accept',
+    'X-Requested-With'
+  ],
+  optionsSuccessStatus: 204
 };
 
-// Register CORS middleware before all routes and handlers
+// Register single authoritative CORS middleware BEFORE express.json(), routes, and error handlers
 app.use(cors(corsOptions));
+
+// HTTP Request Logger for Production Debugging (safely logs method, path, origin without secrets)
+app.use((req, res, next) => {
+  console.log(`[HTTP] ${req.method} ${req.path} Origin: ${req.headers.origin || 'none'}`);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Root health check endpoint for cloud platforms & monitoring
+// Root health check handler
 const handleHealthCheck = async (req, res) => {
   const isConnected = await checkDatabaseConnection();
   if (isConnected) {
