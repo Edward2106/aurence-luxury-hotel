@@ -1,4 +1,4 @@
-import app from './app.js';
+import app, { allowedOrigins } from './app.js';
 import { checkDatabaseConnection, sequelize, host, port, dbName, dbUser } from './config/database.js';
 import { seedInitialAdmin } from './controllers/authController.js';
 import dotenv from 'dotenv';
@@ -17,6 +17,11 @@ async function startServer() {
   console.log(`- Database Name: ${dbName}`);
   console.log(`- Database User: ${dbUser}`);
   console.log(`- Server Port:   ${PORT}`);
+
+  console.log('🌐 Allowed CORS Origins:');
+  allowedOrigins.forEach((origin) => {
+    console.log(`  - ${origin}`);
+  });
 
   console.log('📋 Registered API Routes:');
   console.log('  - GET  /health');
