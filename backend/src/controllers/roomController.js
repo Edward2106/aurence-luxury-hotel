@@ -235,6 +235,28 @@ export const deleteRoom = async (req, res) => {
   }
 };
 
+export const generateSlug = (str) => {
+  if (!str || typeof str !== 'string') return 'slug-' + Date.now();
+  let normalized = str.trim().toLowerCase();
+
+  normalized = normalized
+    .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+    .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+    .replace(/[ìíịỉĩ]/g, 'i')
+    .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+    .replace(/[ùúụủũưừứựửữ]/g, 'u')
+    .replace(/[ỳýỵỷỹ]/g, 'y')
+    .replace(/đ/g, 'd');
+
+  normalized = normalized
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalized || ('slug-' + Date.now());
+};
+
 export const getRoomTypes = async (req, res) => {
   try {
     const roomTypes = await RoomType.findAll({ include: [Hotel] });
@@ -301,9 +323,18 @@ export const createRoomType = async (req, res) => {
     const children = capacityChildren ?? childCapacity ?? 0;
     const totalCap = capacity ? parseInt(capacity, 10) : (parseInt(adults, 10) + parseInt(children, 10)) || 2;
 
+    const baseSlug = generateSlug(trimmedName);
+    let slug = baseSlug;
+    let counter = 1;
+    while (await RoomType.findOne({ where: { slug } })) {
+      counter++;
+      slug = `${baseSlug}-${counter}`;
+    }
+
     const newRoomType = await RoomType.create({
       hotelId: parseInt(hotelId, 10),
       name: trimmedName,
+      slug,
       basePrice: parsedPrice,
       capacity: totalCap,
       description: description || 'Hạng phòng cao cấp sang trọng',
@@ -332,7 +363,19 @@ export const updateRoomType = async (req, res) => {
     if (!roomType) return res.status(404).json({ success: false, message: 'Loại phòng không tồn tại.' });
 
     const updateData = {};
-    if (req.body.name) updateData.name = req.body.name.trim();
+    if (req.body.name) {
+      const trimmedName = req.body.name.trim();
+      updateData.name = trimmedName;
+
+      const baseSlug = generateSlug(trimmedName);
+      let slug = baseSlug;
+      let counter = 1;
+      while (await RoomType.findOne({ where: { slug, id: { [Op.ne]: roomType.id } } })) {
+        counter++;
+        slug = `${baseSlug}-${counter}`;
+      }
+      updateData.slug = slug;
+    }
     if (req.body.basePrice || req.body.price || req.body.pricePerNight) {
       updateData.basePrice = parseFloat(req.body.basePrice || req.body.price || req.body.pricePerNight);
     }
