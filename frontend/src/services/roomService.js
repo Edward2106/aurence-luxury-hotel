@@ -7,7 +7,7 @@ export const roomService = {
   },
 
   getAvailableRooms: async (params) => {
-    const response = await api.get('/rooms/available', { params });
+    const response = await api.get('/rooms', { params });
     return response.data;
   },
 
@@ -18,6 +18,11 @@ export const roomService = {
 
   updateRoom: async (id, data) => {
     const response = await api.put(`/admin/rooms/${id}`, data);
+    return response.data;
+  },
+
+  updateRoomStatus: async (id, status) => {
+    const response = await api.patch(`/admin/rooms/${id}/status`, { status });
     return response.data;
   },
 

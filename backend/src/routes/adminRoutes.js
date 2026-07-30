@@ -19,6 +19,13 @@ import {
   updateSetting,
 } from '../controllers/adminController.js';
 import { createHotel, deleteHotel } from '../controllers/hotelController.js';
+import {
+  getRooms,
+  createRoom,
+  updateRoom,
+  updateRoomStatus,
+  deleteRoom,
+} from '../controllers/roomController.js';
 import { Booking, Room, User, Invoice, Review } from '../models/index.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { adminOnly } from '../middleware/adminMiddleware.js';
@@ -32,36 +39,51 @@ router.get('/dashboard', async (req, res) => {
   try {
     const totalBookings = await Booking.count();
     const totalUsers = await User.count();
-    const totalRooms = await Room.count();
+    const totalRooms = await Room.count({ where: { status: { [Op.ne]: 'inactive' } } });
     const occupiedRooms = await Room.count({ where: { status: 'occupied' } });
     const availableRooms = await Room.count({ where: { status: 'available' } });
+    const reservedRooms = await Room.count({ where: { status: 'reserved' } });
+    const cleaningRooms = await Room.count({ where: { status: 'cleaning' } });
+    const maintenanceRooms = await Room.count({ where: { status: 'maintenance' } });
     const totalReviews = await Review.count();
 
     const paidInvoices = await Invoice.findAll({ where: { paymentStatus: 'paid' } });
     let totalRevenue = paidInvoices.reduce((acc, inv) => acc + parseFloat(inv.totalAmount || 0), 0);
     if (totalRevenue === 0) {
-      const validBookings = await Booking.findAll({ where: { status: { [Op.ne]: 'cancelled' } } });
+      const validBookings = await Booking.findAll({ where: { paymentStatus: 'paid' } });
       totalRevenue = validBookings.reduce((acc, b) => acc + parseFloat(b.totalAmount || 0), 0);
     }
 
     const activeBookings = await Booking.count({ where: { status: ['pending', 'confirmed', 'checked_in'] } });
     const effectiveOccupied = occupiedRooms > 0 ? occupiedRooms : Math.min(activeBookings, totalRooms);
-    const occupancyRate = totalRooms > 0 ? ((effectiveOccupied / totalRooms) * 100).toFixed(1) : '0.0';
+    const occupancyRate = totalRooms > 0 ? parseFloat(((effectiveOccupied / totalRooms) * 100).toFixed(1)) : 0;
 
     res.json({
       totalRevenue,
+      revenue: totalRevenue,
       totalBookings,
       totalUsers,
       totalRooms,
       occupiedRooms: effectiveOccupied,
       availableRooms,
+      reservedRooms,
+      cleaningRooms,
+      maintenanceRooms,
       totalReviews,
-      occupancyRate,
+      occupancyRate: occupancyRate.toFixed(1),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
+// Rooms
+router.get('/rooms', getRooms);
+router.post('/rooms', createRoom);
+router.put('/rooms/:id', updateRoom);
+router.patch('/rooms/:id/status', updateRoomStatus);
+router.put('/rooms/:id/status', updateRoomStatus);
+router.delete('/rooms/:id', deleteRoom);
 
 // Users
 router.get('/users', getUsers);
