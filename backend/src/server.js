@@ -18,6 +18,18 @@ async function startServer() {
   console.log(`- Database User: ${dbUser}`);
   console.log(`- Server Port:   ${PORT}`);
 
+  console.log('📋 Registered API Routes:');
+  console.log('  - GET  /health');
+  console.log('  - GET  /api/health');
+  console.log('  - POST /api/auth/register');
+  console.log('  - POST /api/auth/login');
+  console.log('  - GET  /api/auth/me');
+  console.log('  - GET  /api/hotels');
+  console.log('  - GET  /api/hotels/:id');
+  console.log('  - GET  /api/rooms');
+  console.log('  - POST /api/bookings');
+  console.log('  - GET  /api/admin/employees');
+
   console.log('🔄 Checking database connection before starting server...');
   const isConnected = await checkDatabaseConnection();
 

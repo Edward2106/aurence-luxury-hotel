@@ -39,7 +39,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/api/health', async (req, res) => {
+// Root health check endpoint for cloud platforms & monitoring
+const handleHealthCheck = async (req, res) => {
   const isConnected = await checkDatabaseConnection();
   if (isConnected) {
     return res.status(200).json({
@@ -56,8 +57,21 @@ app.get('/api/health', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
+};
+
+app.get('/', (req, res) => {
+  return res.status(200).json({
+    status: 'ok',
+    name: 'Aurence Luxury Hotel API',
+    version: '1.0.0',
+    health: '/api/health',
+  });
 });
 
+app.get('/health', handleHealthCheck);
+app.get('/api/health', handleHealthCheck);
+
+// Mount central API routes under /api
 app.use('/api', routes);
 
 app.use(errorHandler);
