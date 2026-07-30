@@ -34,14 +34,25 @@ api.interceptors.response.use(
   }
 );
 
-export const formatCurrency = (amount, currency = 'VND') => {
-  const num = typeof amount === 'number' ? amount : parseFloat(amount);
+export const normalizePrice = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const num = Number(value);
+  return Number.isFinite(num) && num >= 0 ? num : null;
+};
+
+export const formatCurrencyVND = (value, fallback = 'Liên hệ') => {
+  const price = normalizePrice(value);
+  if (price === null) return fallback;
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(isNaN(num) ? 0 : num);
+  }).format(price);
+};
+
+export const formatCurrency = (amount, currency = 'VND', fallback = 'Liên hệ') => {
+  return formatCurrencyVND(amount, fallback);
 };
 
 export const formatDate = (dateString) => {

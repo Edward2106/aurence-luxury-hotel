@@ -1,5 +1,42 @@
-import { Hotel, RoomType, Room, Review, Booking } from '../models/index.js';
+import { Hotel, RoomType, Room, Review } from '../models/index.js';
 import { Op } from 'sequelize';
+
+const formatHotel = (hotelInstance) => {
+  const plain = hotelInstance.toJSON();
+  const reviews = plain.Reviews || [];
+  const totalScore = reviews.reduce((sum, r) => sum + (r.overallRating || 5), 0);
+  const avgRating = reviews.length > 0 ? (totalScore / reviews.length).toFixed(1) : plain.starRating || 5;
+
+  const rawRoomTypes = plain.RoomTypes || plain.roomTypes || [];
+  const roomTypes = rawRoomTypes.map((rt) => {
+    const rawPrice = Number(rt.basePrice || rt.price || rt.pricePerNight);
+    const price = Number.isFinite(rawPrice) && rawPrice >= 0 ? rawPrice : null;
+    return {
+      ...rt,
+      basePrice: price,
+      pricePerNight: price,
+      price: price,
+    };
+  });
+
+  const validPrices = roomTypes
+    .map((rt) => rt.pricePerNight)
+    .filter((p) => p !== null && p >= 0);
+
+  const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : null;
+
+  return {
+    ...plain,
+    RoomTypes: roomTypes,
+    roomTypes: roomTypes,
+    rooms: roomTypes,
+    averageRating: parseFloat(avgRating),
+    reviewCount: reviews.length,
+    minPrice,
+    priceStart: minPrice,
+    price: minPrice,
+  };
+};
 
 export const getHotels = async (req, res) => {
   try {
@@ -42,18 +79,7 @@ export const getHotels = async (req, res) => {
       ],
     });
 
-    const formattedHotels = hotels.map((h) => {
-      const plain = h.toJSON();
-      const reviews = plain.Reviews || [];
-      const totalScore = reviews.reduce((sum, r) => sum + (r.overallRating || 5), 0);
-      const avgRating = reviews.length > 0 ? (totalScore / reviews.length).toFixed(1) : plain.starRating || 5;
-
-      return {
-        ...plain,
-        averageRating: parseFloat(avgRating),
-        reviewCount: reviews.length,
-      };
-    });
+    const formattedHotels = hotels.map(formatHotel);
 
     return res.json({ hotels: formattedHotels });
   } catch (error) {
@@ -78,17 +104,8 @@ export const getHotelById = async (req, res) => {
 
     if (!hotel) return res.status(404).json({ message: 'Khách sạn không tồn tại.' });
 
-    const plain = hotel.toJSON();
-    const reviews = plain.Reviews || [];
-    const totalScore = reviews.reduce((sum, r) => sum + (r.overallRating || 5), 0);
-    const avgRating = reviews.length > 0 ? (totalScore / reviews.length).toFixed(1) : plain.starRating || 5;
-
     return res.json({
-      hotel: {
-        ...plain,
-        averageRating: parseFloat(avgRating),
-        reviewCount: reviews.length,
-      },
+      hotel: formatHotel(hotel),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -102,7 +119,7 @@ export const createHotel = async (req, res) => {
       data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now();
     }
     const hotel = await Hotel.create(data);
-    return res.status(201).json({ hotel });
+    return res.status(201).json({ hotel: formatHotel(hotel) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -113,7 +130,7 @@ export const updateHotel = async (req, res) => {
     const hotel = await Hotel.findByPk(req.params.id);
     if (!hotel) return res.status(404).json({ message: 'Khách sạn không tồn tại.' });
     await hotel.update(req.body);
-    return res.json({ hotel });
+    return res.json({ hotel: formatHotel(hotel) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

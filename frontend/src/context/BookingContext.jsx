@@ -1,22 +1,24 @@
 import React, { createContext, useContext, useState } from 'react';
+import { normalizePrice } from '../services/api';
 
 const BookingContext = createContext(null);
 
 export const BookingProvider = ({ children }) => {
   const [selectedHotel, setSelectedHotel] = useState({
-    id: 'hotel-1',
+    id: 1,
     name: 'Aurence Palais Royale',
   });
   const [selectedRoom, setSelectedRoom] = useState({
-    id: 'rt-1',
-    name: 'Royal Heritage Suite',
-    basePrice: 1250,
+    id: 1,
+    name: 'Phòng Deluxe Hướng Biển',
+    basePrice: 2800000,
+    pricePerNight: 2800000,
   });
   const [checkInDate, setCheckInDate] = useState(
     new Date(Date.now() + 86400000).toISOString().split('T')[0]
   );
   const [checkOutDate, setCheckOutDate] = useState(
-    new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0]
+    new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
   );
   const [guestCount, setGuestCount] = useState(2);
   const [selectedServices, setSelectedServices] = useState([]);
@@ -29,10 +31,14 @@ export const BookingProvider = ({ children }) => {
     if (data.guestCount) setGuestCount(data.guestCount);
   };
 
+  const currentPrice = normalizePrice(selectedRoom?.basePrice || selectedRoom?.pricePerNight || selectedRoom?.price) || 2800000;
+
   const bookingSummary = {
+    selectedHotel,
+    selectedRoom,
     hotelName: selectedHotel?.name,
     roomName: selectedRoom?.name,
-    pricePerNight: selectedRoom?.basePrice || 1250,
+    pricePerNight: currentPrice,
     checkInDate,
     checkOutDate,
     guestCount,

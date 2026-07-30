@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MapPin, Heart } from 'lucide-react';
-import { formatCurrency } from '../services/api';
-
+import { formatCurrencyVND, normalizePrice } from '../services/api';
 import { SafeImage } from './SafeImage';
 
 export const HotelCard = ({ hotel, isFavorite, onToggleFavorite }) => {
   const imageSrc = hotel.mainImage || hotel.imageUrl || hotel.image || '/images/hotels/hotel-default.jpg';
+  const displayPrice = normalizePrice(hotel.minPrice ?? hotel.priceStart ?? hotel.price);
 
   return (
     <div className="group glass-card rounded-3xl overflow-hidden glass-card-hover border border-gold-500/20 flex flex-col justify-between">
@@ -53,7 +53,7 @@ export const HotelCard = ({ hotel, isFavorite, onToggleFavorite }) => {
         <div className="flex items-center justify-between pt-4 border-t border-slate-800">
           <div>
             <span className="text-[10px] text-slate-400 block uppercase">Giá Từ</span>
-            <span className="text-lg font-bold gold-gradient-text">{formatCurrency(hotel.priceStart || hotel.price || 3500000)}</span>
+            <span className="text-lg font-bold gold-gradient-text">{formatCurrencyVND(displayPrice)}</span>
             <span className="text-[10px] text-slate-400"> / đêm</span>
           </div>
           <Link

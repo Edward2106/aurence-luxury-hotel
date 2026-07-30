@@ -1,6 +1,6 @@
 import React from 'react';
-import { formatCurrency } from '../services/api';
+import { formatCurrencyVND } from '../services/api';
 
-export const CurrencyText = ({ amount, currency = 'USD', className = '' }) => {
-  return <span className={`font-bold gold-gradient-text ${className}`}>{formatCurrency(amount, currency)}</span>;
+export const CurrencyText = ({ amount, currency = 'VND', fallback = 'Liên hệ', className = '' }) => {
+  return <span className={`font-bold gold-gradient-text ${className}`}>{formatCurrencyVND(amount, fallback)}</span>;
 };

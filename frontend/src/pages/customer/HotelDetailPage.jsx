@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { hotelService } from '../../services/hotelService';
-import { roomService } from '../../services/roomService';
 import { useBookingContext } from '../../context/BookingContext';
 import { StarRating } from '../../components/StarRating';
 import { CurrencyText } from '../../components/CurrencyText';
 import { RoomCard } from '../../components/RoomCard';
 import { SafeImage } from '../../components/SafeImage';
+import { normalizePrice } from '../../services/api';
 
 export const HotelDetailPage = () => {
   const params = useParams();
@@ -18,17 +18,18 @@ export const HotelDetailPage = () => {
   const [hotel, setHotel] = useState(null);
   const [roomTypes, setRoomTypes] = useState([]);
   const [activeImage, setActiveImage] = useState('/images/hotels/hotel-default.jpg');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (targetId) {
+      setIsLoading(true);
       hotelService.getHotelById(targetId)
         .then((data) => {
           if (data.hotel) {
             setHotel(data.hotel);
             setActiveImage(data.hotel.imageUrl || data.hotel.image || '/images/hotels/hotel-default.jpg');
-            if (data.hotel.RoomTypes) {
-              setRoomTypes(data.hotel.RoomTypes);
-            }
+            const rooms = data.hotel.RoomTypes || data.hotel.roomTypes || data.hotel.rooms || [];
+            setRoomTypes(rooms);
           }
         })
         .catch(() => {
@@ -41,16 +42,41 @@ export const HotelDetailPage = () => {
               { id: 1, name: 'Phòng Deluxe Hướng Biển', basePrice: foundMock.price || 3500000, capacity: 2, sizeSqM: 48, bedType: '1 Giường King', description: foundMock.description }
             ]);
           }
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
     }
   }, [targetId]);
 
-  if (!hotel) return <div className="p-20 text-center text-slate-400">Đang tải thông tin khách sạn...</div>;
+  const lowestPrice = useMemo(() => {
+    if (!roomTypes || roomTypes.length === 0) {
+      return normalizePrice(hotel?.minPrice || hotel?.priceStart || hotel?.price);
+    }
+    const validPrices = roomTypes
+      .map((rt) => normalizePrice(rt.basePrice || rt.pricePerNight || rt.price))
+      .filter((p) => p !== null && p >= 0);
+
+    return validPrices.length > 0
+      ? Math.min(...validPrices)
+      : normalizePrice(hotel?.minPrice || hotel?.priceStart || hotel?.price);
+  }, [roomTypes, hotel]);
+
+  if (isLoading || !hotel) {
+    return <div className="p-20 text-center text-slate-400">Đang tải thông tin khách sạn...</div>;
+  }
 
   const handleBookRoom = (rt) => {
+    const selectedRt = rt || roomTypes[0];
+    const roomPrice = normalizePrice(selectedRt?.basePrice || selectedRt?.pricePerNight || selectedRt?.price || lowestPrice || 2500000);
     updateSearch({
       selectedHotel: { id: hotel.id, name: hotel.name },
-      selectedRoom: { id: rt ? rt.id : 1, name: rt ? rt.name : 'Standard Room', basePrice: rt ? rt.basePrice || rt.price : 2500000 },
+      selectedRoom: {
+        id: selectedRt ? selectedRt.id : 1,
+        name: selectedRt ? selectedRt.name : 'Standard Room',
+        basePrice: roomPrice,
+        pricePerNight: roomPrice,
+      },
     });
     navigate('/booking');
   };
@@ -104,8 +130,8 @@ export const HotelDetailPage = () => {
         <div className="lg:col-span-1">
           <div className="sticky top-28 p-6 rounded-3xl bg-navy-900 border border-gold-500/40 shadow-2xl space-y-6">
             <div className="border-b border-slate-800 pb-4">
-              <span className="text-[10px] text-slate-400 uppercase block">Giá Tốt Nhất</span>
-              <CurrencyText amount={roomTypes.length ? roomTypes[0].basePrice : 2500000} className="text-2xl" />
+              <span className="text-[10px] text-slate-400 uppercase block">Giá Từ Thấp Nhất</span>
+              <CurrencyText amount={lowestPrice} className="text-2xl" />
               <span className="text-xs text-slate-400"> / đêm</span>
             </div>
             <button
