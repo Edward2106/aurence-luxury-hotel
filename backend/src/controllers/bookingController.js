@@ -6,22 +6,14 @@ export const createBooking = async (req, res) => {
   try {
     const checkInStr = req.body.checkInDate || req.body.checkIn;
     const checkOutStr = req.body.checkOutDate || req.body.checkOut;
-    let targetRoomId = req.body.roomId || req.body.roomTypeId;
     const { guestCount, specialRequest } = req.body;
 
-    if (!targetRoomId || !checkInStr || !checkOutStr) {
+    if ((!req.body.roomId && !req.body.roomTypeId && !req.body.hotelId) || !checkInStr || !checkOutStr) {
       return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin phòng và ngày lưu trú.' });
     }
 
     const checkInDate = checkInStr;
     const checkOutDate = checkOutStr;
-
-    let room = await Room.findByPk(targetRoomId, { include: [RoomType] });
-    if (!room) {
-      room = await Room.findOne({ include: [RoomType] });
-      if (room) targetRoomId = room.id;
-    }
-    const roomId = targetRoomId;
 
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
@@ -41,12 +33,52 @@ export const createBooking = async (req, res) => {
     }
 
     const guests = parseInt(guestCount || 1, 10);
+    const adults = Math.max(1, parseInt(req.body.adultCount || guests, 10));
+    const children = Math.max(0, parseInt(req.body.childCount || 0, 10));
+
     if (isNaN(guests) || guests <= 0) {
       return res.status(400).json({ message: 'Số lượng khách phải lớn hơn 0.' });
     }
 
+    let room = null;
+    if (req.body.roomId) {
+      room = await Room.findByPk(req.body.roomId, { include: [RoomType, Hotel] });
+    }
+
+    if (!room && req.body.roomTypeId) {
+      const roomTypeWhere = { roomTypeId: req.body.roomTypeId };
+      if (req.body.hotelId) {
+        roomTypeWhere.hotelId = req.body.hotelId;
+      }
+      room = await Room.findOne({
+        where: roomTypeWhere,
+        include: [RoomType, Hotel],
+      });
+    }
+
+    if (!room && req.body.hotelId) {
+      room = await Room.findOne({
+        where: { hotelId: req.body.hotelId },
+        include: [RoomType, Hotel],
+      });
+    }
+
     if (!room) {
-      return res.status(404).json({ message: 'Phòng không tồn tại.' });
+      room = await Room.findOne({ include: [RoomType, Hotel] });
+    }
+
+    if (!room) {
+      return res.status(404).json({ message: 'Không tìm thấy phòng phù hợp trong hệ thống.' });
+    }
+
+    if (req.body.hotelId && room.hotelId !== parseInt(req.body.hotelId, 10)) {
+      const matchingRoom = await Room.findOne({
+        where: { hotelId: req.body.hotelId },
+        include: [RoomType, Hotel],
+      });
+      if (matchingRoom) {
+        room = matchingRoom;
+      }
     }
 
     if (room.RoomType && guests > room.RoomType.capacity) {
@@ -57,7 +89,7 @@ export const createBooking = async (req, res) => {
 
     const overlappingBooking = await Booking.findOne({
       where: {
-        roomId,
+        roomId: room.id,
         status: { [Op.ne]: 'cancelled' },
         checkInDate: { [Op.lt]: checkOutDate },
         checkOutDate: { [Op.gt]: checkInDate },
@@ -71,12 +103,21 @@ export const createBooking = async (req, res) => {
     }
 
     const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
-    const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    const nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
     const basePrice = parseFloat(room.RoomType?.basePrice || 0);
+
+    if (isNaN(basePrice) || basePrice <= 0) {
+      return res.status(400).json({ message: 'Giá phòng chưa được thiết lập chính xác.' });
+    }
+
     const roomCharge = basePrice * nights;
+    const serviceCharge = Math.max(0, parseFloat(req.body.serviceCharge || 0));
+    const discountAmount = Math.max(0, parseFloat(req.body.discountAmount || req.body.discount || 0));
+    const subtotal = roomCharge + serviceCharge;
+    const taxableAmount = Math.max(0, subtotal - discountAmount);
     const vatRate = 10;
-    const vatAmount = roomCharge * (vatRate / 100);
-    const grandTotal = roomCharge + vatAmount;
+    const vatAmount = Math.round(taxableAmount * (vatRate / 100));
+    const totalAmount = Math.max(0, subtotal + vatAmount - discountAmount);
 
     const result = await sequelize.transaction(async (t) => {
       const bookingCode = `AUR-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -85,13 +126,22 @@ export const createBooking = async (req, res) => {
         {
           bookingCode,
           userId: req.user.id,
-          roomId,
+          roomId: room.id,
           checkInDate,
           checkOutDate,
           guestCount: guests,
+          adultCount: adults,
+          childCount: children,
+          numberOfNights: nights,
           roomPrice: basePrice,
-          totalAmount: roomCharge,
+          roomCharge,
+          serviceCharge,
+          vatRate,
+          vatAmount,
+          discountAmount,
+          totalAmount,
           status: 'pending',
+          paymentStatus: 'unpaid',
           specialRequest: specialRequest || null,
         },
         { transaction: t }
@@ -103,10 +153,13 @@ export const createBooking = async (req, res) => {
           invoiceCode,
           bookingId: newBooking.id,
           roomCharge,
-          serviceCharge: 0,
+          serviceCharge,
+          discountAmount,
           vatRate,
           vatAmount,
-          totalAmount: grandTotal,
+          totalAmount,
+          amountPaid: 0,
+          amountDue: totalAmount,
           paymentStatus: 'unpaid',
         },
         { transaction: t }
@@ -245,21 +298,37 @@ export const payBookingInvoice = async (req, res) => {
       return res.status(403).json({ message: 'Bạn không có quyền thanh toán hóa đơn này.' });
     }
 
-    const invoice = await Invoice.findOne({ where: { bookingId: booking.id } });
-    if (invoice) {
-      if (invoice.paymentStatus === 'paid') {
-        return res.status(400).json({ message: 'Hóa đơn này đã được thanh toán trước đó.' });
-      }
-      await invoice.update({
-        paymentStatus: 'paid',
-        amountPaid: invoice.totalAmount,
-        amountDue: 0,
-        paidAt: new Date(),
-        paymentMethod: 'e_wallet',
-      });
+    if (booking.paymentStatus === 'paid') {
+      return res.status(400).json({ message: 'Đơn đặt phòng này đã được thanh toán trước đó.' });
     }
 
-    await booking.update({ paymentStatus: 'paid' });
+    const result = await sequelize.transaction(async (t) => {
+      const invoice = await Invoice.findOne({ where: { bookingId: booking.id }, transaction: t });
+      if (invoice) {
+        await invoice.update(
+          {
+            paymentStatus: 'paid',
+            amountPaid: invoice.totalAmount,
+            amountDue: 0,
+            paidAt: new Date(),
+            paymentMethod: req.body?.paymentMethod || 'e_wallet',
+          },
+          { transaction: t }
+        );
+      }
+
+      const newStatus = booking.status === 'pending' ? 'confirmed' : booking.status;
+      await booking.update(
+        {
+          paymentStatus: 'paid',
+          status: newStatus,
+          confirmedAt: booking.confirmedAt || new Date(),
+        },
+        { transaction: t }
+      );
+
+      return { booking, invoice };
+    });
 
     createNotificationHelper({
       userId: booking.userId,
@@ -279,7 +348,11 @@ export const payBookingInvoice = async (req, res) => {
       relatedEntityId: booking.id,
     });
 
-    return res.json({ message: 'Mô phỏng thanh toán thành công. Hóa đơn của bạn đã được cập nhật.', booking });
+    return res.json({
+      message: 'Mô phỏng thanh toán thành công. Hóa đơn của bạn đã được cập nhật.',
+      booking: result.booking,
+      invoice: result.invoice,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

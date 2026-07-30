@@ -33,7 +33,7 @@ export const MyBookingsPage = () => {
   const filtered = bookings.filter((b) => {
     const statusUpper = (b.status || '').toUpperCase();
     if (activeTab === 'UPCOMING') return statusUpper === 'CONFIRMED' || statusUpper === 'PENDING' || statusUpper === 'CHECKED_IN';
-    return statusUpper === 'CHECKED_OUT' || statusUpper === 'CANCELLED';
+    return statusUpper === 'CHECKED_OUT' || statusUpper === 'CANCELLED' || statusUpper === 'COMPLETED';
   });
 
   return (

@@ -39,10 +39,58 @@ export const Booking = sequelize.define('Booking', {
     defaultValue: 1,
     field: 'guest_count',
   },
+  adultCount: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    defaultValue: 1,
+    field: 'adult_count',
+  },
+  childCount: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'child_count',
+  },
+  numberOfNights: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    defaultValue: 1,
+    field: 'number_of_nights',
+  },
   roomPrice: {
     type: DataTypes.DECIMAL(15, 2),
     allowNull: false,
     field: 'room_price',
+  },
+  roomCharge: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'room_charge',
+  },
+  serviceCharge: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'service_charge',
+  },
+  vatRate: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 10,
+    field: 'vat_rate',
+  },
+  vatAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'vat_amount',
+  },
+  discountAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'discount_amount',
   },
   totalAmount: {
     type: DataTypes.DECIMAL(15, 2),
@@ -51,12 +99,12 @@ export const Booking = sequelize.define('Booking', {
     field: 'total_amount',
   },
   status: {
-    type: DataTypes.ENUM('pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'),
+    type: DataTypes.ENUM('pending', 'confirmed', 'checked_in', 'checked_out', 'completed', 'cancelled', 'no_show'),
     allowNull: false,
     defaultValue: 'pending',
   },
   paymentStatus: {
-    type: DataTypes.ENUM('unpaid', 'paid', 'refunded'),
+    type: DataTypes.ENUM('unpaid', 'partially_paid', 'paid', 'refunded'),
     allowNull: false,
     defaultValue: 'unpaid',
     field: 'payment_status',
@@ -65,6 +113,16 @@ export const Booking = sequelize.define('Booking', {
     type: DataTypes.TEXT,
     allowNull: true,
     field: 'special_request',
+  },
+  cancellationReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'cancellation_reason',
+  },
+  confirmedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'confirmed_at',
   },
   checkedInAt: {
     type: DataTypes.DATE,
@@ -75,6 +133,11 @@ export const Booking = sequelize.define('Booking', {
     type: DataTypes.DATE,
     allowNull: true,
     field: 'checked_out_at',
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'completed_at',
   },
   cancelledAt: {
     type: DataTypes.DATE,

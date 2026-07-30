@@ -7,19 +7,27 @@ import { formatCurrency, formatDate } from '../services/api';
 export const BookingCard = ({ booking, onCancel }) => {
   const hotelName = booking.Room?.Hotel?.name || booking.hotelName || 'Aurence Luxury Hotel';
   const hotelCity = booking.Room?.Hotel?.city || booking.hotelCity || 'Hồ Chí Minh';
+  const roomName = booking.Room?.RoomType?.name || booking.roomName || 'Phòng Khách Sạn Cao Cấp';
   const totalAmount = booking.Invoice?.totalAmount || booking.totalAmount || booking.grandTotal || 0;
   const checkIn = booking.checkInDate || booking.checkIn;
   const checkOut = booking.checkOutDate || booking.checkOut;
+  const isPaid = (booking.Invoice?.paymentStatus || booking.paymentStatus || '').toLowerCase() === 'paid';
 
   return (
     <div className="p-6 rounded-3xl bg-navy-900 border border-gold-500/20 space-y-6 shadow-xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-gold-400">
-            Mã: {booking.bookingCode}
-          </span>
-          <h3 className="font-serif text-xl font-bold text-slate-100">{hotelName}</h3>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-gold-400">
+              Mã: {booking.bookingCode}
+            </span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isPaid ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+              {isPaid ? 'Đã Thanh Toán' : 'Chưa Thanh Toán'}
+            </span>
+          </div>
+          <h3 className="font-serif text-xl font-bold text-slate-100 mt-1">{hotelName}</h3>
+          <p className="text-xs text-gold-400/80 font-medium">{roomName}</p>
+          <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
             <MapPin className="w-3.5 h-3.5 text-gold-400" /> {hotelCity}
           </p>
         </div>

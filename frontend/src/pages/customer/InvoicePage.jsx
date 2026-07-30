@@ -17,55 +17,48 @@ export const InvoicePage = () => {
         .then((data) => {
           const b = data.booking;
           if (b) {
-            const roomCharge = parseFloat(b.Invoice?.roomCharge || b.roomPrice || 0);
+            const nights = b.numberOfNights || 1;
+            const unitPrice = parseFloat(b.roomPrice || 0);
+            const roomCharge = parseFloat(b.Invoice?.roomCharge || b.roomCharge || (unitPrice * nights));
+            const serviceCharge = parseFloat(b.Invoice?.serviceCharge || b.serviceCharge || 0);
             const vatAmount = parseFloat(b.Invoice?.vatAmount || b.vatAmount || 0);
+            const discountAmount = parseFloat(b.Invoice?.discountAmount || b.discountAmount || 0);
             const totalAmount = parseFloat(b.Invoice?.totalAmount || b.totalAmount || 0);
             setInvoice({
               invoiceNumber: b.Invoice?.invoiceCode || `INV-${b.bookingCode}`,
               bookingCode: b.bookingCode,
               issuedAt: b.Invoice?.created_at || b.created_at,
-              status: (b.Invoice?.paymentStatus || b.paymentStatus || b.status || 'UNPAID').toUpperCase(),
+              status: (b.Invoice?.paymentStatus || b.paymentStatus || 'UNPAID').toUpperCase(),
               hotel: {
                 name: b.Room?.Hotel?.name || 'Aurence Luxury Hotel',
-                address: b.Room?.Hotel?.address || '15 Place Vendôme, Quận 1',
+                address: b.Room?.Hotel?.address || '15 Place Vendôme',
                 city: b.Room?.Hotel?.city || 'Hồ Chí Minh',
-                country: 'Việt Nam',
+                country: b.Room?.Hotel?.country || 'Việt Nam',
                 taxRegistration: 'EU-98234811-FRA',
               },
               customer: {
-                name: b.User?.fullName || 'Alexander Sterling',
-                email: b.User?.email || 'customer@aurence.com',
-                phone: b.User?.phone || '+84 90 123 4567',
+                name: b.User?.fullName || b.User?.name || 'Khách Hàng',
+                email: b.User?.email || '',
+                phone: b.User?.phone || '',
               },
               lineItems: [
                 {
                   description: `${b.Room?.RoomType?.name || 'Phòng Khách Sạn Cao Cấp'} (Đặt phòng #${b.bookingCode})`,
-                  unitPrice: parseFloat(b.roomPrice || roomCharge),
-                  quantity: b.numberOfNights || 1,
-                  amount: roomCharge > 0 ? roomCharge : totalAmount,
+                  unitPrice: unitPrice,
+                  quantity: nights,
+                  amount: roomCharge,
                 },
               ],
               roomCharges: roomCharge,
-              serviceCharges: 0,
-              discountAmount: 0,
+              serviceCharges: serviceCharge,
+              discountAmount: discountAmount,
               vatAmount: vatAmount,
               grandTotal: totalAmount,
             });
           }
         })
-        .catch(() => {
-          setInvoice({
-            invoiceNumber: `INV-${invoiceId}`,
-            bookingCode: invoiceId,
-            issuedAt: new Date().toISOString(),
-            status: 'UNPAID',
-            hotel: { name: 'Aurence Luxury Hotel', address: '15 Place Vendôme', city: 'Hồ Chí Minh', country: 'Việt Nam' },
-            customer: { name: 'Khách hàng Aurence', email: 'customer@aurence.com', phone: '0901234567' },
-            lineItems: [{ description: 'Đặt phòng khách sạn', unitPrice: 7500000, quantity: 1, amount: 7500000 }],
-            roomCharges: 7500000,
-            vatAmount: 750000,
-            grandTotal: 8250000,
-          });
+        .catch((err) => {
+          console.error('Lỗi tải hóa đơn:', err);
         });
     }
   }, [invoiceId]);

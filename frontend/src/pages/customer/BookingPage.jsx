@@ -11,31 +11,39 @@ export const BookingPage = () => {
   const { bookingSummary } = useBookingContext();
   const { currentUser } = useAuthContext();
 
-  const [guestName, setGuestName] = useState(currentUser?.name || 'Alexander Sterling');
-  const [guestEmail, setGuestEmail] = useState(currentUser?.email || 'customer@aurence.com');
-  const [guestPhone, setGuestPhone] = useState(currentUser?.phone || '0912345678');
+  const [guestName, setGuestName] = useState(currentUser?.fullName || currentUser?.name || '');
+  const [guestEmail, setGuestEmail] = useState(currentUser?.email || '');
+  const [guestPhone, setGuestPhone] = useState(currentUser?.phone || '');
   const [couponCode] = useState('LUXURYGOLD');
-  const [couponApplied] = useState(true);
+  const [couponApplied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nights = calculateNights(bookingSummary.checkInDate, bookingSummary.checkOutDate);
-  const rawRoomTotal = bookingSummary.pricePerNight * nights;
+  const rawRoomTotal = (bookingSummary.pricePerNight || 0) * nights;
   const discountAmount = couponApplied ? rawRoomTotal * 0.1 : 0;
-  const taxAmount = (rawRoomTotal - discountAmount) * 0.1;
-  const grandTotal = rawRoomTotal - discountAmount + taxAmount;
+  const taxableAmount = Math.max(0, rawRoomTotal - discountAmount);
+  const taxAmount = Math.round(taxableAmount * 0.1);
+  const grandTotal = Math.max(0, rawRoomTotal - discountAmount + taxAmount);
 
   const handleFinalSubmit = async () => {
+    if (!guestName || !guestEmail) {
+      alert('Vui lòng nhập đầy đủ họ tên và email.');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const roomId = bookingSummary.selectedRoom?.id || 1;
       const res = await bookingService.createBooking({
-        roomId,
+        hotelId: bookingSummary.hotelId,
+        roomTypeId: bookingSummary.roomTypeId,
+        roomId: bookingSummary.roomId,
         checkInDate: bookingSummary.checkInDate,
         checkOutDate: bookingSummary.checkOutDate,
         guestCount: bookingSummary.guestCount,
         specialRequest: `Khách hàng: ${guestName}, SĐT: ${guestPhone}`,
+        discountAmount: discountAmount,
       });
-      navigate('/my-bookings', { state: { booking: res.booking } });
+      const createdId = res.booking?.id || res.id;
+      navigate(`/invoice/${createdId}`);
     } catch (err) {
       alert(err.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn đặt phòng.');
     } finally {

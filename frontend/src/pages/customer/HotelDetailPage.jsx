@@ -32,16 +32,8 @@ export const HotelDetailPage = () => {
             setRoomTypes(rooms);
           }
         })
-        .catch(() => {
-          const foundMock = window.AURENCE?.hotels?.find((h) => h.id === targetId) || window.AURENCE?.hotels?.[0];
-          if (foundMock) {
-            setHotel(foundMock);
-            setActiveImage(foundMock.image || '/images/hotels/hotel-default.jpg');
-            const mockRooms = window.AURENCE?.rooms?.filter((r) => r.hotelId === foundMock.id) || [];
-            setRoomTypes(mockRooms.length > 0 ? mockRooms : [
-              { id: 1, name: 'Phòng Deluxe Hướng Biển', basePrice: foundMock.price || 3500000, capacity: 2, sizeSqM: 48, bedType: '1 Giường King', description: foundMock.description }
-            ]);
-          }
+        .catch((err) => {
+          console.error('Lỗi lấy thông tin khách sạn:', err);
         })
         .finally(() => {
           setIsLoading(false);
@@ -72,8 +64,9 @@ export const HotelDetailPage = () => {
     updateSearch({
       selectedHotel: { id: hotel.id, name: hotel.name },
       selectedRoom: {
-        id: selectedRt ? selectedRt.id : 1,
-        name: selectedRt ? selectedRt.name : 'Standard Room',
+        id: selectedRt?.id,
+        roomTypeId: selectedRt?.id,
+        name: selectedRt?.name || 'Phòng Khách Sạn',
         basePrice: roomPrice,
         pricePerNight: roomPrice,
       },
