@@ -40,7 +40,7 @@ export const allowedOrigins = Array.from(
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ''))) {
+    if (!origin || allowedOrigins.includes(origin.trim().replace(/['"]/g, '').replace(/\/+$/, ''))) {
       return callback(null, true);
     }
     return callback(null, false);
@@ -56,34 +56,19 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
-// 1. VERY FIRST APPLICATION MIDDLEWARE: Single Authoritative CORS Handler
 app.use(cors(corsOptions));
 
-// 2. GUARANTEED RESPONSE HEADER INTERCEPTOR & HTTP IN/OUT LOGGER
 app.use((req, res, next) => {
-  const origin = req.headers && req.headers.origin;
-  if (origin) {
-    const cleanOrigin = origin.trim().replace(/\/+$/, '');
-    if (allowedOrigins.includes(cleanOrigin)) {
-      res.setHeader('Access-Control-Allow-Origin', cleanOrigin);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-  }
-
-  console.log(`[HTTP IN] ${req.method} ${req.path} Origin: ${origin || 'none'}`);
+  console.log(`[HTTP IN] ${req.method} ${req.path} Origin: ${req.headers.origin || 'none'}`);
   res.on('finish', () => {
     console.log(`[HTTP OUT] ${req.method} ${req.path} Status: ${res.statusCode}`);
   });
-
   next();
 });
 
-// 3. BODY PARSERS
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Root health check handler
 const handleHealthCheck = async (req, res) => {
   const isConnected = await checkDatabaseConnection();
   if (isConnected) {
@@ -115,24 +100,14 @@ app.get('/', (req, res) => {
 app.get('/health', handleHealthCheck);
 app.get('/api/health', handleHealthCheck);
 
-// Mount central API routes under /api
 app.use('/api', routes);
 
-// 4. 404 HANDLER FOR UNRESOLVED ROUTES
 app.use((req, res, next) => {
-  const origin = req.headers && req.headers.origin;
-  if (origin) {
-    const cleanOrigin = origin.trim().replace(/\/+$/, '');
-    if (allowedOrigins.includes(cleanOrigin)) {
-      res.setHeader('Access-Control-Allow-Origin', cleanOrigin);
-    }
-  }
   res.status(404).json({
     message: `Endpoint không tồn tại: ${req.method} ${req.path}`,
   });
 });
 
-// 5. GLOBAL ERROR HANDLER
 app.use(errorHandler);
 
 export default app;
